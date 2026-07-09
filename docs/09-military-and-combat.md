@@ -40,7 +40,7 @@ comes from your crafting tier.
 | **Heavy Infantry** | `u_heavy_inf` | Armored shock troops | Barracks + metallurgy | High DEF/HP, breaks lines | Slow; kited by archers |
 | **Crossbowmen** | `u_crossbow` | Armor-piercing ranged | Fletcher + engineering | Punches heavy armor | Slow reload, melee |
 | **Siege engines** | `u_siege` | Break walls/forts | Siege Workshop + engineering | vs fortifications | Vulnerable in open field |
-| **Elite Guard** | `u_elite` | Adamantite-tier shock | Adamantite Forge + adamantite_refinement | Best in game | Expensive; still needs support |
+| **Elite Guard** | `u_elite` | Adamantine-tier shock | Adamantine Forge + adamantine_refinement | Best in game | Expensive; still needs support |
 
 **Composition matters** (rock-paper-scissors): spears beat cavalry, cavalry beats archers,
 archers beat spears/infantry at range; heavy infantry anchors; siege for forts. No single unit
@@ -114,7 +114,7 @@ For each round:
 | **Morale** | Driven by supply, recent victories (*Heroic*), losses, leader, happiness back home (war weariness) |
 | **Leadership** | A general adds tactics/morale and may enable a special (ambush, rally, charge) |
 | **Composition** | Correct counter-units multiply damage; being hard-countered divides it |
-| **Equipment grade** | Bronze < iron < steel < adamantite is a large multiplier — **why the mining/crafting ladder matters** |
+| **Equipment grade** | Bronze < iron < steel < adamantine is a large multiplier — **why the mining/crafting ladder matters** |
 | **Numbers** | More units = more total power, but supply/terrain can cap effective frontage |
 | **Surprise/flanking** | Cavalry speed + good scouting → first-strike/flank bonus |
 

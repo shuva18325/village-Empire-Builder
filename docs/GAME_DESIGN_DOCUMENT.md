@@ -1,6 +1,6 @@
 # Empire Builder — Master Game Design Document
 
-**Document version:** 0.1 (first complete pass)
+**Document version:** 0.2 (Mediterranean campaign + integrated flags)
 **Last updated:** 2026-07-09
 **Status:** Living document. Everything is tunable. Sections may grow independently.
 
@@ -31,15 +31,17 @@
 ## 1. Executive Summary
 
 **Empire Builder** is a single-player strategy game about growing **one settlement into a
-civilization** on a compact **~100-tile world**. You begin with a **Primitive Village** on
-a single tile with an auto-generated name. You explore through **fog-of-war**, **claim** and
+civilization**. The shipped **Mediterranean Campaign** ([doc 15](15-mediterranean-campaign.md))
+plays on a staged, authored world that grows from a **60-tile Peloponnese** start to a
+**300–400-tile Mediterranean**; a compact ~100-tile random world remains as the Skirmish
+default. You begin with a **Primitive Village** on a single tile with an auto-generated name. You explore through **fog-of-war**, **claim** and
 **colonize** neighboring tiles, **mine** ever-deeper and more dangerous materials, **research**
-technology, **craft** weapons from wooden spears to **adamantite swords**, manage a **living
+technology, **craft** weapons from wooden spears to **adamantine swords**, manage a **living
 population** with jobs and happiness, field **armies** with supply lines, and contend with
 **rival AI nations** through diplomacy or war.
 
 The central tension is **risk vs. reward on the tile map**: the best materials
-(obsidian, lapis, magma glass, and the ultra-rare **adamantite ore**) sit inside the most
+(obsidian, lapis, magma glass, and the ultra-rare **adamantine ore**) sit inside the most
 **dangerous tiles** — volcanoes with heat, ash, smoke, and eruptions. To exploit them you
 must first climb the **tech, gear, and logistics** ladders. Every advance you make is
 visible on the map: fog lifts, roads connect tiles into a glowing network, your **flag**
@@ -85,7 +87,7 @@ The game is paced as a deliberate **survival → stability → ambition → domi
  │  freeze."  │       │  town."    │        │  volcano." │        │  Grand     │
  │            │       │            │        │            │        │  Capital." │
  └────────────┘       └────────────┘        └────────────┘        └────────────┘
-   Hunt, forage,        Farms, roads,          Metallurgy,           Adamantite army,
+   Hunt, forage,        Farms, roads,          Metallurgy,           Adamantine army,
    first mine,          barracks, first        volcanic mining,      subjugate/ally
    claim 2-3 tiles.     colony, a flag.        elite weapons.        all AI nations.
 ```
@@ -98,7 +100,7 @@ overwhelmed:
 | Survival | Hunting & foraging, fog exploration | "We might not make it." |
 | Stability | Colonization, the **flag**, seasons | "This is *ours* now." |
 | Ambition | Metallurgy, volcanic extraction, armies | "We're strong enough to reach for more." |
-| Dominance | Adamantite tier, diplomacy endgame | "History will remember us." |
+| Dominance | Adamantine tier, diplomacy endgame | "History will remember us." |
 
 ---
 
@@ -174,7 +176,7 @@ in [Capital & Flags](02-capital-and-flags.md#capital-evolution); the summary:
 | T2 | **Organized Settlement** | **Choose your flag**, first colony, roads, seasons matter | Pop ≥ 25, 3 building types, Farming tech, 2 tiles claimed |
 | T3 | **Early Capital** | Metallurgy, barracks & armies, brick buildings, rename capital | Pop ≥ 120, Metallurgy, 1 colony, an Armory |
 | T4 | **Developed Capital** | Volcanic extraction, iron/steel, forts, advanced diplomacy | Pop ≥ 400, Engineering, a claimed volcano tile, 3 colonies |
-| T5 | **Grand Capital** | Adamantite refinement, elite army, civilization-tier decrees | Pop ≥ 1000, Adamantite Refinement, Grand Plaza, 6 developed tiles |
+| T5 | **Grand Capital** | Adamantine refinement, elite army, civilization-tier decrees | Pop ≥ 1000, Adamantine Refinement, Grand Plaza, 6 developed tiles |
 
 > **Flag timing:** the player may choose their flag once they reach **Organized Settlement
 > (T2)**, and may re-affirm/redesign it at **Early Capital (T3)**. **Renaming the capital**
@@ -191,12 +193,12 @@ tables live in [Resources](03-resources-mining-and-gear.md); this is the mental 
 |-------|----------|-------------|---------------------|
 | **L1 — Sustenance** | Food (berries, fish, game meat), Water | Keeps pop alive & growing | Hunting, foraging, farms, fishing |
 | **L2 — Building materials** | Wood, Stone, Clay, Brick, Timber, Limestone | Construction | Lumber camps, quarries, kilns |
-| **L3 — Metals & ores** | Copper, Tin, Iron, Bronze, Steel, Adamantite | Weapons, armor, elite buildings | Mines (tool-gated) |
+| **L3 — Metals & ores** | Copper, Tin, Iron, Bronze, Steel, Adamantine | Weapons, armor, elite buildings | Mines (tool-gated) |
 | **L4 — Special minerals** | Obsidian, Salt, Coal, Lapis, Quartz, Magma glass | Advanced recipes, luxury, fuel | Hazard tiles, deep mines |
 | **L5 — Soft/abstract** | Population, Happiness, Culture, Influence, Research, Faith | Everything social & political | Buildings, decrees, festivals |
 
 **The golden rule of the economy:** *L3/L4 (the good stuff) is gated behind L1/L2 stability
-and L5 (tech/pop/happiness).* You cannot rush adamantite; you must first feed, house, and
+and L5 (tech/pop/happiness).* You cannot rush adamantine; you must first feed, house, and
 teach your people, then earn the gear to survive the volcano.
 
 ```
@@ -240,7 +242,7 @@ tier-up) **auto-pause** and raise a modal. Full model in
 | **Grand Capital (Domination-lite)** | Reach Tier 5 **and** hold 6+ developed tiles | Your seat of power is unmatched |
 | **Conquest** | Eliminate or vassalize all AI nations | The last flag standing |
 | **Cultural Ascendancy** | Reach Culture/Faith thresholds + build all Wonder-tier buildings | Your way of life defines the age |
-| **Adamantite Age** | Field a full elite (adamantite) army + refine 100 adamantite | Master the volcano's heart |
+| **Adamantine Age** | Field a full elite (adamantine) army + refine 100 adamantine | Master the volcano's heart |
 
 ### 8.2 Loss conditions
 
@@ -315,7 +317,7 @@ scoreboard sitting on top.
 | 01 | [World & Tiles](01-world-and-tiles.md) | The ~100-tile world: terrain, resources, fog, hazards, animals, legendary tiles |
 | 02 | [Capital & Flags](02-capital-and-flags.md) | 5-tier capital evolution, renaming, and the full flag system (your PNGs) |
 | 03 | [Resources, Mining & Gear](03-resources-mining-and-gear.md) | Material taxonomy, pickaxe tiers, hazard mining, worker gear |
-| 04 | [Weapons & Crafting](04-weapons-and-crafting.md) | Tribal → adamantite weapon tree, crafting buildings, recipes |
+| 04 | [Weapons & Crafting](04-weapons-and-crafting.md) | Tribal → adamantine weapon tree, crafting buildings, recipes |
 | 05 | [Population & Happiness](05-population-and-happiness.md) | Job classes, growth, status effects, decrees |
 | 06 | [Technology](06-technology.md) | Full tech tree, eras, costs, unlocks |
 | 07 | [City Building](07-city-building.md) | Building catalog, districts, upgrade chains, costs |
@@ -326,6 +328,7 @@ scoreboard sitting on top.
 | 12 | [Extra Mechanics](12-extra-mechanics.md) | Seasons, disasters, culture, religion, migration, festivals |
 | 13 | [Future Roadmap](13-future-roadmap.md) | Holiday/festival ideas, backlog, phased build plan |
 | 14 | [Formulas & Data Appendix](14-formulas-and-data-appendix.md) | Every formula, balance constants, progression charts, sample run |
+| 15 | [The Mediterranean Campaign](15-mediterranean-campaign.md) | The shipped campaign: Peloponnese→Empire acts, tile counts, naval ages, the Iron Pantheon, 8 rival empires |
 
 ---
 
@@ -358,7 +361,7 @@ scoreboard sitting on top.
   `max(...)`, `min(...)`, `floor(...)`.
 - **Costs** are written `{wood:20, stone:10}` (a resource bundle).
 - **Gates/requirements** are written as bullet checklists.
-- **IDs**: lower_snake_case (`volcano_core`, `adamantite_sword`) — these match the
+- **IDs**: lower_snake_case (`volcano_core`, `adamantine_sword`) — these match the
   machine-readable seeds in [`/data`](../data).
 - **"TBD"** marks a deliberately open decision; **"(roadmap)"** marks deferred scope.
 
@@ -369,6 +372,7 @@ scoreboard sitting on top.
 | Version | Date | Notes |
 |---------|------|-------|
 | 0.1 | 2026-07-09 | First complete pass: all 14 sections, flag pipeline, seed data. |
+| 0.2 | 2026-07-09 | **Mediterranean Campaign** (doc 15 + `campaign-mediterranean.json`): staged 60→100→300–400-tile world, naval ages, the Iron Pantheon metal ladder, 8 rival empires. Six user flags integrated as PNG+SVG (incl. reworked Imperial Eagle with globus cruciger). `adamantite` renamed **`adamantine`** everywhere. Naval techs/buildings added to core data. |
 
 > Add a row here every time the GDD changes materially. Keep the newest on top of §13's list
 > or bottom — pick one and stay consistent (currently: append).

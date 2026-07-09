@@ -1,6 +1,7 @@
 {
   "$schema_note": "Machine-readable seed data for Empire Builder. Mirrors the design tables in /docs (the docs describe intent; this data drives the future build). ALL numbers are tunable balance constants — see docs/14-formulas-and-data-appendix.md. IDs are lower_snake_case and match the docs.",
-  "version": "0.1",
+  "version": "0.2",
+  "campaign_files": ["data/campaign-mediterranean.json"],
 
   "constants": {
     "ticks_per_day": 20,
@@ -22,7 +23,7 @@
     { "tier": "T2", "id": "organized_settlement", "name": "Organized Settlement", "pop_gate": 25, "decree_slots": 2, "can_choose_flag": true, "can_rename": false, "req": { "building_types": 3, "tech": ["farming"], "tiles_claimed": 2, "happiness": 40 } },
     { "tier": "T3", "id": "early_capital", "name": "Early Capital", "pop_gate": 120, "decree_slots": 3, "can_choose_flag": true, "can_rename": true, "req": { "tech": ["metallurgy"], "colonies": 1, "buildings": ["armory", "market"], "dev_level": 30, "happiness": 45 } },
     { "tier": "T4", "id": "developed_capital", "name": "Developed Capital", "pop_gate": 400, "decree_slots": 4, "can_rename": true, "req": { "tech": ["engineering", "volcanic_extraction"], "volcano_tiles_claimed": 1, "colonies": 3, "buildings": ["fort", "university", "foundry"], "dev_level": 55 } },
-    { "tier": "T5", "id": "grand_capital", "name": "Grand Capital", "pop_gate": 1000, "decree_slots": 5, "can_rename": true, "req": { "tech": ["adamantite_refinement"], "developed_tiles": 6, "buildings": ["grand_plaza", "wonder_any"], "adamantite_refined": 50, "happiness": 55 } }
+    { "tier": "T5", "id": "grand_capital", "name": "Grand Capital", "pop_gate": 1000, "decree_slots": 5, "can_rename": true, "req": { "tech": ["adamantine_refinement"], "developed_tiles": 6, "buildings": ["grand_plaza", "wonder_any"], "adamantine_refined": 50, "happiness": 55 } }
   ],
 
   "terrain": [
@@ -36,7 +37,7 @@
     { "id": "tundra", "move_cost": 3, "build_ease": 1, "food_base": 0, "base_danger": 3, "pop_cap_base": 8, "resources": ["iron", "lapis", "furs"], "claim_tech": "cold_survival" },
     { "id": "water", "move_cost": 0, "build_ease": 0, "food_base": 3, "base_danger": 1, "pop_cap_base": 12, "resources": ["fish", "salt", "reeds"], "claim_tech": "boats" },
     { "id": "volcanic_slope", "move_cost": 3, "build_ease": 0, "food_base": 0, "base_danger": 4, "pop_cap_base": 5, "resources": ["obsidian", "magma_glass", "lapis", "sulfur"], "claim_tech": "volcanic_extraction" },
-    { "id": "volcano_core", "move_cost": 4, "build_ease": 0, "food_base": 0, "base_danger": 5, "pop_cap_base": 5, "resources": ["adamantite_ore", "obsidian", "magma_glass", "lapis"], "claim_tech": "volcanic_extraction" }
+    { "id": "volcano_core", "move_cost": 4, "build_ease": 0, "food_base": 0, "base_danger": 5, "pop_cap_base": 5, "resources": ["adamantine_ore", "obsidian", "magma_glass", "lapis"], "claim_tech": "volcanic_extraction" }
   ],
 
   "resources": {
@@ -57,8 +58,8 @@
       { "id": "gold", "layer": "L3", "depth": "deep", "tool": "pick_iron" },
       { "id": "bronze", "layer": "L3", "crafted_from": ["copper", "tin"] },
       { "id": "steel", "layer": "L3", "crafted_from": ["iron", "coal"] },
-      { "id": "adamantite_ore", "layer": "L3", "depth": "core", "tool": "pick_adamantite" },
-      { "id": "adamantite", "layer": "L3", "crafted_from": ["adamantite_ore", "steel", "magma_glass"] }
+      { "id": "adamantine_ore", "layer": "L3", "depth": "core", "tool": "pick_adamantine" },
+      { "id": "adamantine", "layer": "L3", "crafted_from": ["adamantine_ore", "steel", "magma_glass"] }
     ],
     "minerals": [
       { "id": "obsidian", "layer": "L4", "depth": "shallow", "tool": "pick_stone" },
@@ -80,7 +81,7 @@
     { "id": "pick_stone", "yield_mult": 1.4, "unlocks": ["copper", "tin", "coal", "obsidian", "limestone"], "recipe": { "wood": 2, "stone": 2 } },
     { "id": "pick_lapis", "yield_mult": 1.9, "unlocks": ["iron", "quartz", "lapis"], "recipe": { "wood": 2, "lapis": 1, "copper": 1 } },
     { "id": "pick_iron", "yield_mult": 2.5, "unlocks": ["deep_iron", "silver", "gold", "magma_glass"], "recipe": { "timber": 2, "iron": 2 }, "tech": "metallurgy" },
-    { "id": "pick_adamantite", "yield_mult": 3.5, "unlocks": ["adamantite_ore"], "recipe": { "steel": 2, "adamantite": 2 }, "tech": "adamantite_refinement" }
+    { "id": "pick_adamantine", "yield_mult": 3.5, "unlocks": ["adamantine_ore"], "recipe": { "steel": 2, "adamantine": 2 }, "tech": "adamantine_refinement" }
   ],
 
   "gear": [
@@ -105,8 +106,8 @@
     { "id": "wpn_crossbow", "tier": "iron", "atk": 22, "ranged": true, "material": ["iron", "timber"], "tech": "engineering", "building": "bld_forge" },
     { "id": "wpn_steel_sword", "tier": "steel", "atk": 28, "material": ["steel"], "tech": "advanced_forging", "building": "bld_foundry" },
     { "id": "wpn_steel_halberd", "tier": "steel", "atk": 30, "material": ["steel", "timber"], "tech": "advanced_forging", "building": "bld_foundry" },
-    { "id": "wpn_adamantite_sword", "tier": "adamantite", "atk": 42, "material": ["adamantite", "steel"], "tech": "adamantite_refinement", "building": "bld_adamantite_forge" },
-    { "id": "wpn_adamantite_maul", "tier": "adamantite", "atk": 46, "material": ["adamantite", "magma_glass"], "tech": "adamantite_refinement", "building": "bld_adamantite_forge" }
+    { "id": "wpn_adamantine_sword", "tier": "adamantine", "atk": 42, "material": ["adamantine", "steel"], "tech": "adamantine_refinement", "building": "bld_adamantine_forge" },
+    { "id": "wpn_adamantine_maul", "tier": "adamantine", "atk": 46, "material": ["adamantine", "magma_glass"], "tech": "adamantine_refinement", "building": "bld_adamantine_forge" }
   ],
 
   "armor": [
@@ -115,10 +116,10 @@
     { "id": "arm_bronze", "tier": "bronze", "def": 7, "material": ["bronze", "leather"], "tech": "bronze_working" },
     { "id": "arm_iron", "tier": "iron", "def": 11, "material": ["iron", "leather"], "tech": "metallurgy" },
     { "id": "arm_steel", "tier": "steel", "def": 16, "material": ["steel"], "tech": "advanced_forging" },
-    { "id": "arm_adamantite", "tier": "adamantite", "def": 24, "material": ["adamantite", "steel"], "tech": "adamantite_refinement" }
+    { "id": "arm_adamantine", "tier": "adamantine", "def": 24, "material": ["adamantine", "steel"], "tech": "adamantine_refinement" }
   ],
 
-  "grade_mult": { "tribal": 1.0, "copper": 1.3, "bronze": 1.6, "iron": 2.0, "steel": 2.6, "adamantite": 3.6 },
+  "grade_mult": { "tribal": 1.0, "copper": 1.3, "bronze": 1.6, "iron": 2.0, "steel": 2.6, "adamantine": 3.6 },
 
   "units": [
     { "id": "u_militia", "role": "levy", "building": "bld_barracks", "tech": null, "counters": [], "countered_by": ["all"] },
@@ -128,7 +129,7 @@
     { "id": "u_heavy_inf", "role": "shock", "building": "bld_barracks", "tech": "metallurgy", "counters": ["u_spearmen"], "countered_by": ["u_archers", "u_crossbow"] },
     { "id": "u_crossbow", "role": "ranged_ap", "building": "bld_fletcher", "tech": "engineering", "counters": ["u_heavy_inf"], "countered_by": ["u_cavalry"] },
     { "id": "u_siege", "role": "siege", "building": "bld_siege_workshop", "tech": "engineering", "counters": ["fortification"], "countered_by": ["u_cavalry"] },
-    { "id": "u_elite", "role": "elite", "building": "bld_adamantite_forge", "tech": "adamantite_refinement", "counters": ["all_lower_grade"], "countered_by": [] }
+    { "id": "u_elite", "role": "elite", "building": "bld_adamantine_forge", "tech": "adamantine_refinement", "counters": ["all_lower_grade"], "countered_by": [] }
   ],
 
   "tech": [
@@ -160,12 +161,16 @@
     { "id": "drainage", "era": "E3", "prereq": ["engineering"], "cost": 300 },
     { "id": "cold_survival", "era": "E3", "prereq": ["engineering"], "cost": 300 },
     { "id": "logistics", "era": "E3", "prereq": ["engineering"], "cost": 360 },
+    { "id": "shipbuilding", "era": "E3", "prereq": ["boats", "masonry"], "cost": 280 },
+    { "id": "naval_warfare", "era": "E3", "prereq": ["shipbuilding", "bronze_working"], "cost": 340 },
+    { "id": "advanced_shipbuilding", "era": "E4", "prereq": ["naval_warfare", "engineering"], "cost": 560 },
+    { "id": "deep_sea_navigation", "era": "E5", "prereq": ["advanced_shipbuilding", "mathematics"], "cost": 800 },
     { "id": "advanced_forging", "era": "E4", "prereq": ["metallurgy", "engineering"], "cost": 600 },
     { "id": "volcanic_extraction", "era": "E4", "prereq": ["advanced_forging"], "cost": 700 },
     { "id": "bureaucracy", "era": "E4", "prereq": ["literature"], "cost": 500 },
     { "id": "chemistry", "era": "E4", "prereq": ["education"], "cost": 480 },
     { "id": "medicine", "era": "E4", "prereq": ["chemistry"], "cost": 520 },
-    { "id": "adamantite_refinement", "era": "E5", "prereq": ["advanced_forging", "volcanic_extraction"], "cost": 1100 },
+    { "id": "adamantine_refinement", "era": "E5", "prereq": ["advanced_forging", "volcanic_extraction"], "cost": 1100 },
     { "id": "statecraft", "era": "E6", "prereq": ["bureaucracy", "education"], "cost": 900 },
     { "id": "grand_culture", "era": "E6", "prereq": ["education", "philosophy"], "cost": 950 }
   ],
@@ -192,7 +197,7 @@
     { "id": "smelter", "cat": "craft", "cost": { "stone": 30, "clay": 20 }, "tech": "smelting", "dl_gain": 4 },
     { "id": "forge", "cat": "craft", "cost": { "stone": 40, "iron": 20 }, "tech": "metallurgy", "dl_gain": 5 },
     { "id": "foundry", "cat": "craft", "cost": { "brick": 50, "iron": 40 }, "tech": "advanced_forging", "dl_gain": 6 },
-    { "id": "adamantite_forge", "cat": "craft", "cost": { "steel": 40, "magma_glass": 20 }, "tech": "adamantite_refinement", "dl_gain": 8 },
+    { "id": "adamantine_forge", "cat": "craft", "cost": { "steel": 40, "magma_glass": 20 }, "tech": "adamantine_refinement", "dl_gain": 8 },
     { "id": "sawmill", "cat": "craft", "cost": { "wood": 20 }, "tech": "roads_and_wheels", "dl_gain": 3 },
     { "id": "tailor", "cat": "craft", "cost": { "wood": 20, "clay": 10 }, "tech": "weaving", "dl_gain": 3 },
     { "id": "fletcher", "cat": "craft", "cost": { "wood": 20 }, "tech": "archery", "dl_gain": 3 },
@@ -221,8 +226,11 @@
     { "id": "bridge", "cat": "infra", "cost": { "timber": 30, "stone": 20 }, "tech": "roads_and_wheels", "dl_gain": 2 },
     { "id": "aqueduct", "cat": "infra", "cost": { "brick": 50, "stone": 40 }, "tech": "engineering", "dl_gain": 5 },
     { "id": "supply_depot", "cat": "infra", "cost": { "timber": 30, "stone": 20 }, "tech": "logistics", "dl_gain": 4 },
+    { "id": "shipyard", "cat": "military", "cost": { "timber": 60, "stone": 30 }, "tech": "shipbuilding", "dl_gain": 5 },
+    { "id": "great_harbor", "cat": "commerce", "cost": { "stone": 80, "timber": 40 }, "tech": "shipbuilding", "dl_gain": 6 },
+    { "id": "sea_fort", "cat": "military", "cost": { "stone": 120, "iron": 30 }, "tech": "naval_warfare", "dl_gain": 6 },
     { "id": "grand_plaza", "cat": "wonder", "cost": { "brick": 200, "lapis": 30, "steel": 20 }, "tech": "grand_culture", "dl_gain": 12 },
-    { "id": "wonder_great_forge", "cat": "wonder", "cost": { "adamantite": 20, "steel": 80 }, "tech": "adamantite_refinement", "dl_gain": 15 },
+    { "id": "wonder_great_forge", "cat": "wonder", "cost": { "adamantine": 20, "steel": 80 }, "tech": "adamantine_refinement", "dl_gain": 15 },
     { "id": "wonder_great_library", "cat": "wonder", "cost": { "brick": 200, "quartz": 40 }, "tech": "education", "dl_gain": 15 },
     { "id": "wonder_beacon", "cat": "wonder", "cost": { "stone": 300, "lapis": 50 }, "tech": "grand_culture", "dl_gain": 15 }
   ],
@@ -285,7 +293,7 @@
       { "id": "harvest_feast", "name": "Harvest Feast", "trigger": "season:autumn", "duration_days": 2, "effects": { "happiness_add": 8, "status": "well_fed" }, "cost": { "food": 60 }, "cooldown": "1y" },
       { "id": "forge_day", "name": "Forge Day", "trigger": "annual:summer:day7", "duration_days": 1, "effects": { "production_mult": 1.25, "craft_speed_mult": 1.25 }, "cost": { "gold": 40 }, "cooldown": "1y", "requires": { "tier": "T3" } },
       { "id": "founders_day", "name": "Founders' Day", "trigger": "event:capital_anniversary", "duration_days": 2, "effects": { "culture_add": 10, "happiness_add": 6, "pop_add": 3 }, "cost": { "food": 40, "gold": 30 }, "cooldown": "1y" },
-      { "id": "first_ore_day", "name": "First Ore Day", "trigger": "event:first_adamantite_refined", "duration_days": 2, "effects": { "happiness_add": 12, "perm_perk": "mining_morale+" }, "cost": {}, "cooldown": "once" }
+      { "id": "first_ore_day", "name": "First Ore Day", "trigger": "event:first_adamantine_refined", "duration_days": 2, "effects": { "happiness_add": 12, "perm_perk": "mining_morale+" }, "cost": {}, "cooldown": "once" }
     ]
   },
 
@@ -293,6 +301,6 @@
     { "id": "grand_capital", "req": "reach T5 + hold 6 developed tiles" },
     { "id": "conquest", "req": "eliminate/vassalize all AI nations" },
     { "id": "cultural", "req": "culture/faith thresholds + all wonders" },
-    { "id": "adamantite_age", "req": "full elite army + refine 100 adamantite" }
+    { "id": "adamantine_age", "req": "full elite army + refine 100 adamantine" }
   ]
 }

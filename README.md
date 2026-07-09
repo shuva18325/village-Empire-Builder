@@ -2,7 +2,7 @@
 
 > A single-player 4X / grand-strategy city-builder where you guide **one tiny village**
 > on a **~100-tile world** all the way to a **Grand Capital** ruling a civilization —
-> mining volcanic adamantite, forging elite armies, managing population and happiness,
+> mining volcanic adamantine, forging elite armies, managing population and happiness,
 > and out-maneuvering rival AI nations.
 
 **Working title:** *Empire Builder* (rename in-game once you reach the capital-naming tier).
@@ -34,7 +34,7 @@ lives in its own numbered file so it can grow independently:
 | 01 | [World & Tiles](docs/01-world-and-tiles.md) | Terrain, resources, fog-of-war, hazards, animals, legendary tiles |
 | 02 | [Capital & Flags](docs/02-capital-and-flags.md) | 5-tier capital evolution, renaming, the flag system + PNG integration |
 | 03 | [Resources, Mining & Gear](docs/03-resources-mining-and-gear.md) | Full material taxonomy, pickaxe tiers, hazard mining, worker gear |
-| 04 | [Weapons & Crafting](docs/04-weapons-and-crafting.md) | Tribal → adamantite weapon tree, crafting buildings, recipes |
+| 04 | [Weapons & Crafting](docs/04-weapons-and-crafting.md) | Tribal → adamantine weapon tree, crafting buildings, recipes |
 | 05 | [Population & Happiness](docs/05-population-and-happiness.md) | Pop groups, growth, status effects, decrees |
 | 06 | [Technology](docs/06-technology.md) | Full tech tree, eras, costs, unlocks |
 | 07 | [City Building](docs/07-city-building.md) | Building catalog, districts, upgrade chains, material costs |
@@ -45,6 +45,7 @@ lives in its own numbered file so it can grow independently:
 | 12 | [Extra Mechanics](docs/12-extra-mechanics.md) | Seasons, disasters, culture, religion, migration, festivals |
 | 13 | [Future Roadmap](docs/13-future-roadmap.md) | Holiday/festival ideas, backlog, phased build plan |
 | 14 | [Formulas & Data Appendix](docs/14-formulas-and-data-appendix.md) | Every formula, balance constants, progression charts, sample run |
+| 15 | [The Mediterranean Campaign](docs/15-mediterranean-campaign.md) | **The shipped campaign**: Peloponnese (60 tiles) → Greece (100) → Mediterranean Empire (300–400), naval ages, the Iron Pantheon metals, 8 rival empires |
 
 ## Repo layout
 
@@ -54,37 +55,35 @@ village-Empire-Builder/
 ├── LICENSE
 ├── docs/                          ← the Game Design Document (living)
 │   ├── GAME_DESIGN_DOCUMENT.md    ← master index / start here
-│   └── 01 … 14 section files
+│   └── 01 … 15 section files      (15 = the Mediterranean Campaign)
 ├── assets/
-│   └── flags/                     ← drop your flag PNGs here (see its README)
+│   └── flags/                     ← the 6 integrated flag PNGs + SVG sources + generator
 │       └── README.md
 └── data/                          ← machine-readable seed data for the future build
     ├── flags.json                 ← flag registry (name, symbolism, bonuses)
-    └── game-data.json             ← resources, buildings, units, tech seed tables
+    ├── game-data.json             ← resources, buildings, units, tech seed tables
+    └── campaign-mediterranean.json← authored campaign: acts, regions, metals, empires
 ```
 
-## Flags — how your PNGs plug in
+## Flags — integrated ✅
 
-You said you'll provide flag PNGs. The pipeline is already specced so you can just
-**drop files in** later:
+Six flags are live (recreated as faithful vector art from the user-supplied designs, PNG +
+editable SVG): **The Imperial Eagle** (+ Porphyrogennetos variant), **The Labarum**,
+**The Holy Cross**, **The Sun of Vergina**, **The Eternal Ankh**. Each has name, symbolism,
+bonuses, and flavor in [`data/flags.json`](data/flags.json).
 
-1. Put each PNG in `assets/flags/` using the naming convention in
-   [`assets/flags/README.md`](assets/flags/README.md) (e.g. `flag_ember_crown.png`).
-2. Add a matching entry to [`data/flags.json`](data/flags.json) (name, symbolism,
-   bonuses, flavor).
-3. The game reads `data/flags.json`, shows every flag whose PNG exists on the **Flag
-   Selection screen**, and stamps the chosen one on the capital tile, military units,
-   diplomacy screens, and connected-tile banners.
-
-Full details: **[Capital & Flags](docs/02-capital-and-flags.md)**.
+To add or override a flag: drop `flag_<id>.png` into `assets/flags/` and add/edit its entry in
+`data/flags.json` — see [`assets/flags/README.md`](assets/flags/README.md). Full system:
+**[Capital & Flags](docs/02-capital-and-flags.md)**.
 
 ## Status
 
 | Area | State |
 |------|-------|
-| Game Design Document | ✅ First complete pass (this repo) |
-| Flag pipeline spec | ✅ Specced, awaiting PNGs |
-| Seed data (`data/`) | ✅ Starter tables |
+| Game Design Document | ✅ Complete pass (14 system docs) |
+| **Mediterranean Campaign** | ✅ Designed ([doc 15](docs/15-mediterranean-campaign.md) + [campaign data](data/campaign-mediterranean.json)) |
+| Flags | ✅ 6 integrated (PNG + SVG + registry) |
+| Seed data (`data/`) | ✅ Core + campaign tables |
 | Playable prototype | ⏳ To be built in follow-up sessions (see [roadmap](docs/13-future-roadmap.md)) |
 
 ## License

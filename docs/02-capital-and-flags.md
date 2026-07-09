@@ -74,12 +74,12 @@ Requirements are **AND-gates** across systems (Pillar P3). Numbers are tunable; 
 | Requirement | Value |
 |-------------|-------|
 | Total population | ≥ 1000 |
-| Tech researched | `adamantite_refinement` (top of the tree) |
+| Tech researched | `adamantine_refinement` (top of the tree) |
 | Developed tiles (DL ≥ 45) | ≥ 6 |
 | Buildings | a **Grand Plaza** + at least **1 Wonder** |
-| Adamantite refined (lifetime) | ≥ 50 |
+| Adamantine refined (lifetime) | ≥ 50 |
 | Happiness | ≥ 55% sustained (no unrest for 1 year) |
-| **Unlocks** | civilization-tier decrees, elite (adamantite) units, endgame victory checks |
+| **Unlocks** | civilization-tier decrees, elite (adamantine) units, endgame victory checks |
 
 ### 3. Auto-generated capital name & renaming
 
@@ -103,7 +103,7 @@ Name-generator word bank + rules: [Formulas & Data Appendix](14-formulas-and-dat
 | Rename | no | no | **yes** | yes | yes |
 | Decree slots | 1 | 2 | 3 | 4 | 5 (civilization decrees) |
 | Diplomacy | none | contact only | basic | alliances/vassals | hegemony options |
-| Best weapon tier reachable | bone/stone | copper | iron/steel | steel | **adamantite** |
+| Best weapon tier reachable | bone/stone | copper | iron/steel | steel | **adamantine** |
 
 ---
 
@@ -229,8 +229,22 @@ STEP 5  (Build phase) The game auto-lists every flag that has BOTH a registry en
 ```
 
 No code change is needed per flag — the flag list is **data-driven**. Add art + a JSON row and
-it appears in-game. See the starter entries in [`/data/flags.json`](../data/flags.json); they
-already include example bonuses/symbolism you can edit or replace to match your real artwork.
+it appears in-game.
+
+### 10.1 Current flag roster (v0.2 — integrated ✅)
+
+The user supplied five historical flag designs; they were recreated as faithful vector art
+(PNG + editable SVG in [`/assets/flags`](../assets/flags/README.md)) and registered in
+[`/data/flags.json`](../data/flags.json), plus one tier-gated variant:
+
+| Flag | Field & charge | Culture tag | Bonuses (headline) | Unlock |
+|------|----------------|-------------|--------------------|--------|
+| **The Imperial Eagle** | Gold; crowned double-headed eagle with sword & **globus cruciger** | aggressive | +3 mil, +2 cul, −5% claim cost | always |
+| **The Labarum** | Red; gold Chi-Rho monogram | devout | +4 morale, +5% battle morale | always |
+| **The Holy Cross** | Red; white flared cross | peaceful | +3 morale, +3 mil, +5% garrison def | always |
+| **The Sun of Vergina** | Red; gold 16-ray star | aggressive | +4 mil, +5% conquest morale | always |
+| **The Eternal Ankh** | River-red; gold ankh | peaceful | +2 cul, +2 morale, **+6% birth rate** | always |
+| **Imperial Eagle (Porphyrogennetos)** | Gold, ringed in Tyrian purple | aggressive | +3 mil, +3 cul, −5% claim cost | **tier:T3** |
 
 ### 11. AI nations also have flags
 

@@ -44,7 +44,7 @@ danger and are tunable. Each has **warning → impact → recovery**, and often 
 
 | Disaster | Trigger/where | Impact | Mitigation | Silver lining |
 |----------|---------------|--------|------------|---------------|
-| **Volcanic eruption** | Active volcano (mining ↑, summer ↑) | Core casualties, building damage, ash/smoke spread | Heed tremors, evac, exosuits, repair | **New rare nodes exposed** (adamantite/obsidian) |
+| **Volcanic eruption** | Active volcano (mining ↑, summer ↑) | Core casualties, building damage, ash/smoke spread | Heed tremors, evac, exosuits, repair | **New rare nodes exposed** (adamantine/obsidian) |
 | **Flood** | Flood plains/rivers (spring) | Damages buildings, drowns crops | Levees, `drainage` | **+soil fertility** after → bumper crop |
 | **Drought** | Arid/summer | Food & water down, wildfire risk | Aqueducts, food stores, wells | Reveals dry-lakebed resources (salt) |
 | **Wildfire** | Forest/drought | Destroys forest (wood), spreads | Firebreaks, clear brush | Cleared land, ash-fertilized soil |

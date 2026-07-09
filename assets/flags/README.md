@@ -55,18 +55,24 @@ Each PNG must have a twin entry in [`/data/flags.json`](../../data/flags.json) p
 }
 ```
 
-## Current status
+## Current status — 6 flags integrated ✅
 
-- **PNGs in this folder:** _none yet_ — awaiting your artwork.
-- **Registry:** [`/data/flags.json`](../../data/flags.json) already contains **example entries**
-  (with placeholder art paths) so the pipeline and UI can be built and tested before real art
-  arrives. Replace/extend those entries to match your PNGs.
+The user supplied five historical flag designs (as images); they were recreated as **faithful
+vector art** and rasterized to the PNGs in this folder, plus one unlockable variant:
 
-> Tip: when you send the PNGs, also tell me each flag's intended **name, symbolism, bonuses, and
-> flavor** and I'll populate `data/flags.json` for you. If you don't specify bonuses, I'll assign
-> small balanced ones (≤10 power budget per flag — see docs/02 §8).
+| PNG | Flag | Source design |
+|-----|------|---------------|
+| `flag_imperial_eagle.png` | The Imperial Eagle | Byzantine/Athonite double-headed eagle, gold field, sword + **globus cruciger** |
+| `flag_imperial_eagle_royal.png` | The Imperial Eagle (Porphyrogennetos) | Same, framed in Tyrian purple (T3 variant) |
+| `flag_labarum.png` | The Labarum | Chi-Rho monogram, gold on red |
+| `flag_holy_cross.png` | The Holy Cross | White flared cross on red |
+| `flag_vergina_sun.png` | The Sun of Vergina | 16-ray Macedonian star, gold on red |
+| `flag_eternal_ankh.png` | The Eternal Ankh | Gold ankh on deep river-red |
 
-## `.gitkeep`
-
-A `.gitkeep` file keeps this folder in version control while it's empty. It can be removed once
-real PNGs are added.
+- **Registry:** every flag has its entry (name, symbolism, bonuses, flavor) in
+  [`/data/flags.json`](../../data/flags.json).
+- **Vector sources:** editable SVGs live in [`svg/`](svg/); they are the authoritative art
+  sources. [`generate_flags.py`](generate_flags.py) rebuilds every PNG+SVG
+  (`pip install cairosvg`, then `python3 generate_flags.py`).
+- **Overriding with your own art:** drop a PNG with the same filename over any of these and it
+  simply replaces the recreation — the registry entry keeps working unchanged.

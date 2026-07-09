@@ -1,6 +1,6 @@
 # 04 — Weapons & Crafting
 
-> From a sharpened stick to an adamantite blade. This document defines the weapon/armor
+> From a sharpened stick to an adamantine blade. This document defines the weapon/armor
 > progression, the crafting buildings, and the exact recipes that turn mined materials
 > (doc 03) into military power (doc 09).
 
@@ -15,9 +15,9 @@ Weapons advance in **tiers**, each gated by a **material**, a **tech**, and a **
 building** (Pillar P3). Every tier is a meaningful power jump but also a meaningful cost jump.
 
 ```
- TRIBAL         COPPER        BRONZE        IRON              STEEL          ADAMANTITE
+ TRIBAL         COPPER        BRONZE        IRON              STEEL          ADAMANTINE
  ┌────────┐    ┌────────┐    ┌────────┐    ┌────────┐        ┌────────┐     ┌────────────┐
- │ wooden │    │ copper │    │ bronze │    │ iron   │        │ steel  │     │ ADAMANTITE │
+ │ wooden │    │ copper │    │ bronze │    │ iron   │        │ steel  │     │ ADAMANTINE │
  │ spear  │─▶  │ spear  │─▶  │ spear  │─▶  │ spear/ │  ─▶    │ sword  │ ─▶  │   sword    │
  │ stone  │    │        │    │        │    │ sword  │        │        │     │  (elite)   │
  │ tips,  │    │        │    │        │    │        │        │        │     │            │
@@ -25,7 +25,7 @@ building** (Pillar P3). Every tier is a meaningful power jump but also a meaning
  │ knives │    │        │    │        │    │        │        │        │     │            │
  └────────┘    └────────┘    └────────┘    └────────┘        └────────┘     └────────────┘
   survival      first metal   stronger      advanced armies   pro armies     elite guard
-  hunting       militia       spearmen      + iron armor      + steel armor  + adamantite armor
+  hunting       militia       spearmen      + iron armor      + steel armor  + adamantine armor
 ```
 
 ### 1.1 Weapon stat table
@@ -47,10 +47,16 @@ building** (Pillar P3). Every tier is a meaningful power jump but also a meaning
 | Crossbow | `wpn_crossbow` | Iron | 22* | High | iron + timber | `engineering` | Forge |
 | **Steel sword** | `wpn_steel_sword` | Steel | 28 | V.High | **steel** | `advanced_forging` | Foundry |
 | Steel halberd | `wpn_steel_halberd` | Steel | 30 | V.High | steel + timber | `advanced_forging` | Foundry |
-| **Adamantite sword** | `wpn_adamantite_sword` | Adamantite | **42** | Extreme | **adamantite bars** + steel | `adamantite_refinement` | Adamantite Forge |
-| Adamantite maul | `wpn_adamantite_maul` | Adamantite | 46 | Extreme | adamantite + magma glass | `adamantite_refinement` | Adamantite Forge |
+| **Adamantine sword** | `wpn_adamantine_sword` | Adamantine | **42** | Extreme | **adamantine bars** + steel | `adamantine_refinement` | Adamantine Forge |
+| Adamantine maul | `wpn_adamantine_maul` | Adamantine | 46 | Extreme | adamantine + magma glass | `adamantine_refinement` | Adamantine Forge |
 
 `*` ranged weapons apply ATK at range with terrain/positioning bonuses — see [Military](09-military-and-combat.md).
+
+> **Campaign extension:** in the Mediterranean Campaign, the **Iron Pantheon** slots 14 named
+> exotic metals (mystic iron, ember-iron, frostbound iron, storm iron, verdant iron, dawn iron,
+> runic ferrite, shadowsteel, dragoon steel, lapis steel, aetherium, void-iron, mythril,
+> starforged iron, celestium) between the spine tiers above, each with its own grade multiplier
+> and signature effect — see [doc 15 §Iron Pantheon](15-mediterranean-campaign.md#iron-pantheon).
 
 ### 1.2 Armor progression (parallel ladder)
 
@@ -63,7 +69,7 @@ Armor advances alongside weapons and multiplies unit **defense/HP**.
 | Bronze plate (partial) | `arm_bronze` | Bronze | 7 | bronze + leather | `bronze_working` |
 | Iron mail | `arm_iron` | Iron | 11 | iron + leather | `metallurgy` |
 | Steel plate | `arm_steel` | Steel | 16 | steel | `advanced_forging` |
-| **Adamantite plate** | `arm_adamantite` | Adamantite | **24** | adamantite + steel | `adamantite_refinement` |
+| **Adamantine plate** | `arm_adamantine` | Adamantine | **24** | adamantine + steel | `adamantine_refinement` |
 
 Weapon + armor tier together define a **unit's equipment grade**, which combines with the unit
 **type** (militia, spearman, etc.) to produce final combat stats in [Military](09-military-and-combat.md).
@@ -81,7 +87,7 @@ weapon ladder.
 | **Smithy** | `bld_smithy` | copper & bronze weapons/tools, boots | `mining` | yes (charcoal) |
 | **Forge** | `bld_forge` | iron weapons/tools/armor, iron pickaxe, masks/helms | `metallurgy` | yes (coal) |
 | **Foundry** | `bld_foundry` | **steel** refining, steel weapons/armor, exosuit parts | `advanced_forging` | yes (coal, lots) |
-| **Adamantite Forge** | `bld_adamantite_forge` | **adamantite** refining, adamantite weapons/armor, exosuits | `adamantite_refinement` | yes (coal + magma glass) |
+| **Adamantine Forge** | `bld_adamantine_forge` | **adamantine** refining, adamantine weapons/armor, exosuits | `adamantine_refinement` | yes (coal + magma glass) |
 | **Tailor / Leatherworks** | `bld_tailor` | cloth, leather, work clothes, masks (cloth parts) | `weaving` | no |
 | **Fletcher** | `bld_fletcher` | bows, crossbows, arrows | `archery` | no |
 | **Armory** (store+equip) | `bld_armory` | *stores* weapons/armor, equips units, +garrison cap | `architecture` | no |
@@ -108,13 +114,13 @@ Representative recipes:
   steel             = Foundry( iron×2, coal×2 )                          [advanced_forging]
   wpn_steel_sword   = Foundry( steel×3, charcoal×1 )                     [advanced_forging]
 
-  adamantite        = AdamantiteForge( adamantite_ore×3, steel×1,
-                                       magma_glass×1, coal×3 )           [adamantite_refinement]
-  wpn_adamantite_sword = AdamantiteForge( adamantite×4, steel×2 )        [adamantite_refinement]
+  adamantine        = AdamantineForge( adamantine_ore×3, steel×1,
+                                       magma_glass×1, coal×3 )           [adamantine_refinement]
+  wpn_adamantine_sword = AdamantineForge( adamantine×4, steel×2 )        [adamantine_refinement]
 
   gear_heatsuit     = Tailor( leather×2, obsidian×1, salt×1 )            [weaving + mining]
   gear_mask         = Tailor( cloth×2, charcoal×1, quartz×1 )            [weaving]
-  gear_exosuit      = AdamantiteForge( steel×4, magma_glass×2, leather×2)[advanced_forging]
+  gear_exosuit      = AdamantineForge( steel×4, magma_glass×2, leather×2)[advanced_forging]
 ```
 
 **Batch crafting:** the player queues items in a workshop; each consumes inputs + a craft time
@@ -133,7 +139,7 @@ The **pickaxes** and **gear** from [doc 03](03-resources-mining-and-gear.md) are
 | `pick_stone` | Toolmaker | wood×2 + stone×2 |
 | `pick_lapis` | Smithy | wood×2 + lapis×1 + copper×1 |
 | `pick_iron` | Forge | timber×2 + iron×2 |
-| `pick_adamantite` | Adamantite Forge | steel×2 + adamantite×2 |
+| `pick_adamantine` | Adamantine Forge | steel×2 + adamantine×2 |
 
 This closes the **mining ↔ crafting loop**: mine to craft better tools → mine faster/deeper →
 craft even better tools & weapons.
@@ -166,13 +172,13 @@ craft even better tools & weapons.
                                       iron mail
  Steel      Foundry                   steel sword/halberd, steel plate,  steel
                                       exosuit parts
- Adamantite Adamantite Forge          adamantite sword/maul, adamantite  adamantite,
+ Adamantine Adamantine Forge          adamantine sword/maul, adamantine  adamantine,
                                       plate, full exosuit                 magma glass
 ```
 
 This chart lines up 1:1 with the [tech tree eras](06-technology.md) and the
 [capital tiers](02-capital-and-flags.md) — steel is reachable at **Developed Capital (T4)**,
-adamantite at **Grand Capital (T5)**.
+adamantine at **Grand Capital (T5)**.
 
 ---
 

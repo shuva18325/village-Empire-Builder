@@ -11,9 +11,16 @@
 
 ## 1. The other players
 
-The world seeds **2–4 rival AI nations** (tunable), each starting as a small tribe like you and
-growing over the game. They occupy the map's other regions and compete for the same finite tiles
-and rare resources.
+The world seeds **2–4 rival AI nations** (tunable) in Skirmish mode, each starting as a small
+tribe like you and growing over the game. They occupy the map's other regions and compete for
+the same finite tiles and rare resources.
+
+> **Campaign note:** the Mediterranean Campaign instead fields **8 named empires** (Empire of
+> Anatolia, Phoenician Coastal Dominion, Kingdom of Kemet, Illyrian Highland Despotate, Italic
+> Maritime Empire, Iberian Hill Kingdoms, Gaulish Grand Kingdom, Mesopotamian Imperial Satrapy)
+> plus scripted minor factions — full dossiers in
+> [doc 15 §The Eight Empires](15-mediterranean-campaign.md#empires). The personality system
+> below powers them all.
 
 Each AI nation has:
 | Attribute | Meaning |

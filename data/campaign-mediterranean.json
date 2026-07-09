@@ -1,0 +1,182 @@
+{
+  "$schema_note": "Authored campaign data for the Mediterranean Campaign (docs/15-mediterranean-campaign.md). Extends /data/game-data.json (core systems). All numbers tunable. Land 347 + sea 14 = 361 tiles (target band 300-400).",
+  "version": "0.1",
+  "campaign_id": "mediterranean",
+  "start_regions_playable": ["laconia", "corinthia", "messenia", "argolis_nafplio", "argolis_argos", "mani", "vatika_monemvasia"],
+
+  "acts": [
+    { "id": "act1", "name": "The Peloponnese", "tiles_active": 60, "objective": "unify_peloponnese", "unlocks": ["boats", "shipbuilding", "stage:league"] },
+    { "id": "act2", "name": "Greece Unification", "tiles_active": 100, "objective": "unify_greece", "unlocks": ["naval_warfare", "stage:kingdom"] },
+    { "id": "act3", "name": "Kingdom Stage - The Naval Age", "tiles_active": 162, "objective": "overseas_foothold", "unlocks": ["advanced_shipbuilding_visible", "foreign_minerals_sighted"] },
+    { "id": "act4", "name": "The Advanced Mineral Age", "tiles_active": 208, "objective": "refine_exotics_and_hold_core", "unlocks": ["deep_sea_navigation", "stage:thalassocracy"] },
+    { "id": "act5", "name": "Empire Stage", "tiles_active": 361, "objective": "empire_administration", "unlocks": ["provinces", "empire_decrees", "stage:empire"] },
+    { "id": "act6", "name": "The Eight Empires", "tiles_active": 361, "objective": "campaign_victory", "unlocks": ["victory_checks"] }
+  ],
+
+  "player_stages": [
+    { "id": "chiefdom", "state_name": "Chiefdom of the Morea", "title": "Archon", "at": "start" },
+    { "id": "polis", "state_name": "<capital>, a Free Polis", "title": "Archon", "at": "capital_T2" },
+    { "id": "league", "state_name": "The Peloponnesian League", "title": "Hegemon", "at": "act1_complete" },
+    { "id": "kingdom", "state_name": "Kingdom of Hellas", "title": "Basileus", "at": "act2_complete" },
+    { "id": "thalassocracy", "state_name": "Thalassocracy of the Hellenes", "title": "Megas Basileus", "at": "act4_complete" },
+    { "id": "empire", "state_name": "The Mediterranean Empire", "title": "Autokrator", "at": "act5_stage", "player_names_it": true }
+  ],
+
+  "naval_ages": [
+    { "age": 0, "name": "Rafts", "tech": "boats", "range_zones": 0, "note": "coastal adjacency + straits only" },
+    { "age": 1, "name": "Early Boats", "tech": "shipbuilding", "range_zones": 1, "note": "coast-hugging exploration, first sea lanes" },
+    { "age": 2, "name": "Warships", "tech": "naval_warfare", "range_zones": 2, "note": "naval combat, overseas colonization, escorts" },
+    { "age": 3, "name": "Advanced Ships", "tech": "advanced_shipbuilding", "range_zones": 4, "note": "boarding, coastal siege, 2-unit lift" },
+    { "age": 4, "name": "Deep-Sea Ships", "tech": "deep_sea_navigation", "range_zones": -1, "note": "unlimited range, all-season, 4-unit lift" }
+  ],
+
+  "ships": [
+    { "id": "ship_raft", "name": "Raft", "age": 0, "role": "ferry_fish", "combat": 0, "capacity": 0, "cost": { "wood": 15 }, "building": "fishery" },
+    { "id": "ship_pentekonter", "name": "Pentekonter", "age": 1, "role": "scout_light_transport", "combat": 4, "capacity": 1, "cost": { "timber": 40 }, "building": "shipyard" },
+    { "id": "ship_trireme", "name": "Trireme", "age": 2, "role": "warship_ram", "combat": 14, "capacity": 0, "cost": { "timber": 60, "bronze": 10 }, "building": "shipyard" },
+    { "id": "ship_bireme_transport", "name": "Bireme Transport", "age": 2, "role": "transport", "combat": 3, "capacity": 1, "cost": { "timber": 50 }, "building": "shipyard" },
+    { "id": "ship_quinquereme", "name": "Quinquereme", "age": 3, "role": "heavy_warship_boarding", "combat": 24, "capacity": 2, "cost": { "timber": 90, "iron": 20 }, "building": "shipyard" },
+    { "id": "ship_grand_galleon", "name": "Grand Galleon", "age": 4, "role": "deep_sea_flagship", "combat": 34, "capacity": 4, "cost": { "timber": 120, "steel": 20, "aetherium": 2 }, "building": "shipyard" }
+  ],
+
+  "sea_zones": [
+    { "id": "sea_aegean", "name": "Aegean Sea", "act": 3, "connects": ["attica", "cyclades", "ionia_lydia", "north_aegean_isles", "sea_marmara", "sea_of_crete"] },
+    { "id": "sea_of_crete", "name": "Sea of Crete", "act": 3, "connects": ["cyclades", "crete", "sea_levantine", "sea_aegean"] },
+    { "id": "sea_ionian", "name": "Ionian Sea", "act": 3, "connects": ["achaea", "epirus", "magna_graecia", "sicily", "sea_adriatic", "gulf_of_gabes"] },
+    { "id": "sea_adriatic", "name": "Adriatic Sea", "act": 3, "connects": ["illyria", "cisalpine_north", "magna_graecia", "sea_ionian"] },
+    { "id": "sea_marmara", "name": "Sea of Marmara", "act": 4, "connects": ["thrace_east", "ionia_lydia", "sea_aegean", "sea_black_approaches"], "straits": ["Bosporus", "Dardanelles"] },
+    { "id": "sea_tyrrhenian", "name": "Tyrrhenian Sea", "act": 4, "connects": ["central_italy", "sicily", "sardinia", "corsica", "sea_ligurian"] },
+    { "id": "sea_levantine", "name": "Levantine Sea", "act": 4, "connects": ["cilicia", "phoenicia", "judea", "egypt_nile", "crete", "sea_of_crete"] },
+    { "id": "sea_ligurian", "name": "Ligurian Sea", "act": 5, "connects": ["cisalpine_north", "gaul_south", "corsica", "sea_tyrrhenian", "gulf_of_lion"] },
+    { "id": "gulf_of_lion", "name": "Gulf of Lion", "act": 5, "connects": ["gaul_south", "iberia_east", "sea_ligurian", "sea_balearic"] },
+    { "id": "sea_balearic", "name": "Balearic Sea", "act": 5, "connects": ["iberia_east", "iberia_central", "sea_alboran", "gulf_of_lion"] },
+    { "id": "sea_alboran", "name": "Alboran Sea", "act": 5, "connects": ["iberia_south", "mauretania", "sea_balearic"] },
+    { "id": "gulf_of_gabes", "name": "Gulf of Gabes", "act": 5, "connects": ["carthage_tunisia", "libya_sirte", "sea_ionian", "gulf_of_sidra"] },
+    { "id": "gulf_of_sidra", "name": "Gulf of Sidra", "act": 5, "connects": ["libya_sirte", "cyrenaica", "gulf_of_gabes", "sea_levantine"] },
+    { "id": "sea_black_approaches", "name": "Black Sea Approaches", "act": 5, "connects": ["thrace_east", "pontus", "dacia", "sea_marmara"] }
+  ],
+
+  "regions": [
+    { "id": "corinthia", "name": "Corinthia", "group": "peloponnese", "act": 1, "tiles": 7, "resources": ["trade_tolls", "clay", "port"], "danger": 1, "owner": "neutral", "notes": "isthmus tolls, twin ports" },
+    { "id": "argolis_argos", "name": "Argolis - Argos", "group": "peloponnese", "act": 1, "tiles": 4, "resources": ["grain", "culture"], "danger": 1, "owner": "argive_remnant" },
+    { "id": "argolis_nafplio", "name": "Argolis - Nafplio", "group": "peloponnese", "act": 1, "tiles": 4, "resources": ["port", "trade", "defense"], "danger": 1, "owner": "neutral" },
+    { "id": "achaea", "name": "Achaea (Patras)", "group": "peloponnese", "act": 1, "tiles": 6, "resources": ["fish", "berries", "port"], "danger": 1, "owner": "neutral" },
+    { "id": "elis", "name": "Elis (Olympia)", "group": "peloponnese", "act": 1, "tiles": 6, "resources": ["grain", "horses", "sacred_site"], "danger": 1, "owner": "neutral", "legendary": "olympia_sacred_games" },
+    { "id": "arcadia", "name": "Arcadia", "group": "peloponnese", "act": 1, "tiles": 8, "resources": ["wood", "stone", "game", "iron_deep"], "danger": 3, "owner": "arcadian_hill_clans" },
+    { "id": "messenia", "name": "Messenia (Kalamata)", "group": "peloponnese", "act": 1, "tiles": 7, "resources": ["grain_surplus", "olives", "fish", "port"], "danger": 1, "owner": "neutral" },
+    { "id": "laconia", "name": "Laconia (Sparta)", "group": "peloponnese", "act": 1, "tiles": 8, "resources": ["copper", "tin", "iron", "stone"], "danger": 2, "owner": "neutral" },
+    { "id": "mani", "name": "Mani", "group": "peloponnese", "act": 1, "tiles": 4, "resources": ["lapis", "obsidian"], "danger": 3, "owner": "free_clans_of_mani" },
+    { "id": "vatika_monemvasia", "name": "Vatika / Monemvasia", "group": "peloponnese", "act": 1, "tiles": 3, "resources": ["fortress_port", "salt", "quartz"], "danger": 2, "owner": "neutral" },
+    { "id": "kythira_strait", "name": "Kythira Strait", "group": "peloponnese", "act": 1, "tiles": 3, "resources": ["fish", "pearls"], "danger": 1, "owner": "neutral" },
+
+    { "id": "attica", "name": "Attica (Athens)", "group": "greece", "act": 2, "tiles": 5, "resources": ["silver", "culture", "great_port"], "danger": 2, "owner": "neutral" },
+    { "id": "boeotia_phocis", "name": "Boeotia & Phocis (Delphi)", "group": "greece", "act": 2, "tiles": 4, "resources": ["grain", "sacred_site"], "danger": 1, "owner": "neutral", "legendary": "delphi_oracle" },
+    { "id": "euboea", "name": "Euboea", "group": "greece", "act": 2, "tiles": 2, "resources": ["copper", "timber", "fish"], "danger": 1, "owner": "neutral" },
+    { "id": "thessaly", "name": "Thessaly", "group": "greece", "act": 2, "tiles": 5, "resources": ["horses", "grain"], "danger": 2, "owner": "neutral" },
+    { "id": "epirus", "name": "Epirus", "group": "greece", "act": 2, "tiles": 4, "resources": ["timber", "verdant_iron_trace"], "danger": 3, "owner": "neutral" },
+    { "id": "macedonia", "name": "Macedonia", "group": "greece", "act": 2, "tiles": 6, "resources": ["gold", "timber", "iron"], "danger": 3, "owner": "neutral" },
+    { "id": "thrace_west", "name": "Thrace (West)", "group": "greece", "act": 2, "tiles": 4, "resources": ["gold", "horses"], "danger": 3, "owner": "thracian_horse_clans" },
+    { "id": "cyclades", "name": "Cyclades (incl. Thera)", "group": "greece", "act": 2, "tiles": 4, "resources": ["marble", "trade_routes", "obsidian", "ember_iron"], "danger": 2, "owner": "neutral", "volcano": "thera" },
+    { "id": "crete", "name": "Crete", "group": "greece", "act": 2, "tiles": 5, "resources": ["ancient_ruins", "timber", "ports", "runic_ferrite_deep", "mythril_rumor"], "danger": 2, "owner": "cretan_corsairs", "legendary": "knossos_labyrinth" },
+    { "id": "north_aegean_isles", "name": "North Aegean Isles", "group": "greece", "act": 2, "tiles": 1, "resources": ["fish", "marble"], "danger": 1, "owner": "neutral" },
+
+    { "id": "illyria", "name": "Illyria", "group": "balkans", "act": 3, "tiles": 10, "resources": ["iron", "timber"], "danger": 4, "owner": "illyrian_despotate" },
+    { "id": "moesia", "name": "Moesia (Bulgaria)", "group": "balkans", "act": 3, "tiles": 8, "resources": ["gold_rivers", "grain"], "danger": 3, "owner": "neutral_tribes" },
+    { "id": "thrace_east", "name": "Thrace East (Byzantion)", "group": "balkans", "act": 3, "tiles": 6, "resources": ["strait_tolls", "vines"], "danger": 2, "owner": "byzantion_city_state" },
+    { "id": "dacia", "name": "Dacia", "group": "balkans", "act": 5, "tiles": 8, "resources": ["frostbound_iron", "gold"], "danger": 4, "owner": "neutral_tribes" },
+
+    { "id": "ionia_lydia", "name": "Ionia & Lydia (W. Anatolia)", "group": "anatolia", "act": 3, "tiles": 14, "resources": ["gold_pactolus", "marble", "dawn_iron", "kin_cities"], "danger": 3, "owner": "empire_of_anatolia" },
+    { "id": "phrygia_central", "name": "Phrygia (C. Anatolia)", "group": "anatolia", "act": 4, "tiles": 10, "resources": ["iron", "wool"], "danger": 3, "owner": "empire_of_anatolia" },
+    { "id": "cappadocia_volcanic", "name": "Cappadocia Volcanic Core", "group": "anatolia", "act": 4, "tiles": 10, "resources": ["adamantine", "celestium", "magma_glass"], "danger": 5, "owner": "empire_of_anatolia", "volcano": "argaeus_core" },
+    { "id": "pontus", "name": "Pontus", "group": "anatolia", "act": 5, "tiles": 6, "resources": ["timber", "silver", "fish"], "danger": 3, "owner": "empire_of_anatolia" },
+
+    { "id": "cilicia", "name": "Cilicia", "group": "levant", "act": 4, "tiles": 4, "resources": ["timber", "pirate_coves"], "danger": 4, "owner": "corsair_strongholds" },
+    { "id": "syria", "name": "Syria (Damascus, Emesa)", "group": "levant", "act": 5, "tiles": 8, "resources": ["trade_crossroads", "glass", "grain"], "danger": 3, "owner": "mesopotamian_satrapy" },
+    { "id": "phoenicia", "name": "Phoenicia", "group": "levant", "act": 5, "tiles": 6, "resources": ["purple_dye", "cedar", "master_ports"], "danger": 2, "owner": "phoenician_dominion" },
+    { "id": "judea", "name": "Judea", "group": "levant", "act": 5, "tiles": 6, "resources": ["olives", "faith_sites"], "danger": 2, "owner": "neutral" },
+    { "id": "mesopotamia", "name": "Mesopotamia", "group": "levant", "act": 5, "tiles": 12, "resources": ["magma_glass", "deep_crystal_ore", "runic_ferrite", "ancient_ruins"], "danger": 4, "owner": "mesopotamian_satrapy" },
+
+    { "id": "egypt_nile", "name": "Nile Egypt", "group": "africa", "act": 5, "tiles": 14, "resources": ["river_superfarms", "gold", "papyrus", "runic_ferrite"], "danger": 2, "owner": "kingdom_of_kemet", "special": "nile_flood_cycle" },
+    { "id": "cyrenaica", "name": "Cyrenaica", "group": "africa", "act": 5, "tiles": 6, "resources": ["grain", "horses", "silphium"], "danger": 2, "owner": "kingdom_of_kemet" },
+    { "id": "libya_sirte", "name": "Libya (Sirte)", "group": "africa", "act": 5, "tiles": 4, "resources": ["salt", "void_iron_craters"], "danger": 4, "owner": "neutral_tribes" },
+    { "id": "carthage_tunisia", "name": "Carthage / Tunisia", "group": "africa", "act": 5, "tiles": 10, "resources": ["master_ports", "trade_wealth", "grain"], "danger": 3, "owner": "phoenician_dominion" },
+    { "id": "numidia", "name": "Numidia (Algeria)", "group": "africa", "act": 5, "tiles": 8, "resources": ["horses", "iron"], "danger": 3, "owner": "neutral_tribes" },
+    { "id": "mauretania", "name": "Mauretania (Morocco)", "group": "africa", "act": 5, "tiles": 6, "resources": ["copper", "fish", "pillars_of_the_west"], "danger": 3, "owner": "neutral_tribes" },
+
+    { "id": "magna_graecia", "name": "Magna Graecia (S. Italy)", "group": "italy", "act": 3, "tiles": 12, "resources": ["fertile_colonies", "kin_cities", "storm_iron_cliffs"], "danger": 2, "owner": "contested_greek_colonies" },
+    { "id": "sicily", "name": "Sicily", "group": "italy", "act": 3, "tiles": 8, "resources": ["grain_island", "ember_iron", "magma_glass"], "danger": 3, "owner": "three_way_contest", "volcano": "etna" },
+    { "id": "central_italy", "name": "Central Italy", "group": "italy", "act": 4, "tiles": 12, "resources": ["rich_cities", "discipline_doctrine"], "danger": 3, "owner": "italic_empire" },
+    { "id": "cisalpine_north", "name": "Cisalpine North Italy", "group": "italy", "act": 5, "tiles": 8, "resources": ["grain_plain", "aetherium_alps_edge"], "danger": 3, "owner": "italic_empire" },
+    { "id": "sardinia", "name": "Sardinia", "group": "italy", "act": 4, "tiles": 4, "resources": ["silver", "granite"], "danger": 3, "owner": "phoenician_dominion" },
+    { "id": "corsica", "name": "Corsica", "group": "italy", "act": 4, "tiles": 3, "resources": ["timber", "storm_iron"], "danger": 3, "owner": "neutral" },
+
+    { "id": "iberia_east", "name": "Iberia East", "group": "far_west", "act": 5, "tiles": 10, "resources": ["silver", "iron_hills", "kin_colony_sites"], "danger": 3, "owner": "iberian_hill_kingdoms" },
+    { "id": "iberia_central", "name": "Iberia Central", "group": "far_west", "act": 5, "tiles": 8, "resources": ["shadowsteel_mines", "wool"], "danger": 4, "owner": "iberian_hill_kingdoms" },
+    { "id": "iberia_south", "name": "Iberia South (Tartessos)", "group": "far_west", "act": 5, "tiles": 6, "resources": ["silver_mother_lode", "mythril_rumor"], "danger": 3, "owner": "iberian_hill_kingdoms" },
+    { "id": "gaul_south", "name": "Gaul South", "group": "far_west", "act": 5, "tiles": 8, "resources": ["wine", "trade_river_mouths"], "danger": 3, "owner": "gaulish_grand_kingdom" },
+    { "id": "gaul_central", "name": "Gaul Central", "group": "far_west", "act": 5, "tiles": 8, "resources": ["verdant_iron_forests", "heavy_horses"], "danger": 4, "owner": "gaulish_grand_kingdom" },
+    { "id": "gaul_north_edge", "name": "Gaul North Edge", "group": "far_west", "act": 5, "tiles": 4, "resources": ["timber", "amber_route"], "danger": 4, "owner": "gaulish_grand_kingdom" }
+  ],
+
+  "tile_totals": { "land": 347, "sea": 14, "total": 361, "per_act_active": { "act1": 60, "act2": 100, "act3": 162, "act4": 208, "act5": 361, "act6": 361 } },
+
+  "campaign_metals": [
+    { "id": "mystic_iron", "name": "Mystic Iron", "grade": 1.8, "source": "shallow_common", "regions": ["everywhere"], "effect": "workable_pre_metallurgy_low_durability", "act": 1 },
+    { "id": "iron", "name": "Iron", "grade": 2.0, "source": "core_spine", "regions": ["laconia", "arcadia", "illyria", "mountains"], "effect": "standard", "act": 2 },
+    { "id": "ember_iron", "name": "Ember-Iron", "grade": 2.15, "source": "volcanic_slopes", "regions": ["cyclades_thera", "sicily_etna", "cappadocia_fringe"], "effect": "burn_damage_needs_heat_gear", "act": 2 },
+    { "id": "frostbound_iron", "name": "Frostbound Iron", "grade": 2.15, "source": "high_cold_ranges", "regions": ["dacia", "balkan_peaks"], "effect": "cold_immunity_winter_combat_bonus", "act": 3 },
+    { "id": "storm_iron", "name": "Storm Iron", "grade": 2.2, "source": "sea_cliff_lodes", "regions": ["magna_graecia", "corsica", "adriatic_cliffs"], "effect": "naval_combat_bonus_unit_speed", "act": 3 },
+    { "id": "verdant_iron", "name": "Verdant Iron", "grade": 2.2, "source": "living_forest_veins", "regions": ["gaul_central", "epirus"], "effect": "no_upkeep_self_mending_forest_bonus", "act": 3 },
+    { "id": "dawn_iron", "name": "Dawn Iron", "grade": 2.25, "source": "sunrise_ranges", "regions": ["ionia_lydia", "armenia_edge"], "effect": "morale_bonus_negates_fearful", "act": 3 },
+    { "id": "runic_ferrite", "name": "Runic Ferrite", "grade": 2.3, "source": "ancient_ruin_veins", "regions": ["crete_knossos", "mesopotamia", "egypt_nile"], "effect": "accepts_one_rune_mod_research_on_forge", "act": 4 },
+    { "id": "shadowsteel", "name": "Shadowsteel", "grade": 2.4, "source": "crafted:iron+coal+obsidian", "regions": ["iberia_central"], "effect": "ambush_night_bonus_hard_to_scout", "act": 4 },
+    { "id": "dragoon_steel", "name": "Dragoon Steel", "grade": 2.5, "source": "crafted:steel+horse_country_tempering", "regions": ["thessaly", "iberia"], "effect": "cavalry_charge_and_defense_bonus", "act": 4 },
+    { "id": "lapis_steel", "name": "Lapis Steel", "grade": 2.55, "source": "crafted:lapis+iron (advanced_forging)", "regions": ["any_foundry"], "effect": "culture_aura_anti_morale_shock", "act": 4 },
+    { "id": "steel", "name": "Steel", "grade": 2.6, "source": "core_spine", "regions": ["any_foundry"], "effect": "professional_standard", "act": 4 },
+    { "id": "aetherium", "name": "Aetherium", "grade": 2.9, "source": "sky_touched_peaks", "regions": ["armenia_highlands", "cisalpine_alps_edge"], "effect": "featherweight_move_and_range_bonus", "act": 5 },
+    { "id": "void_iron", "name": "Void-Iron", "grade": 3.0, "source": "meteor_craters", "regions": ["libya_sirte", "rare_world_events"], "effect": "armor_piercing", "act": 5 },
+    { "id": "mythril", "name": "Mythril", "grade": 3.2, "source": "legendary_veins_1_2_per_world", "regions": ["crete_labyrinth_deep", "iberia_south"], "effect": "elite_light_armor_no_speed_penalty", "act": 5 },
+    { "id": "starforged_iron", "name": "Starforged Iron", "grade": 3.4, "source": "forged:void_iron+aetherium@wonder_great_forge", "regions": ["crafted_only"], "effect": "hero_units_one_per_army_weapons", "act": 5 },
+    { "id": "celestium", "name": "Celestium", "grade": 3.5, "source": "celestial_veins_cloudline", "regions": ["cappadocia_volcanic"], "effect": "morale_aura_temple_grade_trim", "act": 6 },
+    { "id": "adamantine", "name": "Adamantine", "grade": 3.6, "source": "volcanic_cores_only", "regions": ["cappadocia_volcanic", "sicily_etna_heart"], "effect": "apex_tier_see_core_docs", "act": 6 },
+    { "id": "magma_glass", "name": "Magma Glass", "grade": null, "source": "foreign_volcanic", "regions": ["sicily_etna", "cyclades_thera", "cappadocia_volcanic", "mesopotamia"], "effect": "utility_lenses_trim_exosuits", "act": 4 },
+    { "id": "deep_crystal_ore", "name": "Deep Crystal Ore", "grade": null, "source": "rare_foreign_mountains", "regions": ["armenia_highlands", "mesopotamia"], "effect": "siege_engine_cores_research_instruments", "act": 4 }
+  ],
+
+  "enemy_empires": [
+    { "id": "empire_of_anatolia", "name": "Empire of Anatolia", "polity": "Empire", "inspiration": "Hittite/Lydian/Phrygian", "personality": ["warlord", "builder"], "regions": ["ionia_lydia", "phrygia_central", "cappadocia_volcanic", "pontus"], "tiles": 40, "signature_units": ["anatolian_chariots", "core_guard"], "economy": "adamantine_core_mines", "first_contact_act": 3, "flag": "procedural_crest:black_bull_on_bronze" },
+    { "id": "phoenician_dominion", "name": "Phoenician Coastal Dominion", "polity": "Dominion", "inspiration": "Phoenician city-states", "personality": ["merchant"], "regions": ["phoenicia", "carthage_tunisia", "sardinia"], "tiles": 20, "signature_units": ["corsair_hires", "purple_trade_fleets"], "economy": "trade_mastery_ports", "first_contact_act": 3, "flag": "procedural_crest:white_ship_on_purple" },
+    { "id": "kingdom_of_kemet", "name": "Kingdom of Kemet", "polity": "Kingdom", "inspiration": "Late Egyptian dynasties", "personality": ["builder", "zealot"], "regions": ["egypt_nile", "cyrenaica"], "tiles": 20, "signature_units": ["medjay_archers", "nile_flotillas"], "economy": "river_farming_population", "first_contact_act": 4, "flag": "procedural_crest:gold_ankh_on_white" },
+    { "id": "illyrian_despotate", "name": "Illyrian Highland Despotate", "polity": "Despotate", "inspiration": "Illyrian tribes", "personality": ["warlord", "nomad"], "regions": ["illyria"], "tiles": 10, "signature_units": ["highland_raiders"], "economy": "iron_mastery_raiding", "first_contact_act": 3, "flag": "procedural_crest:grey_peak_on_red", "doctrine": "ambush_from_unscouted_tiles" },
+    { "id": "italic_empire", "name": "Italic Maritime Empire", "polity": "Empire", "inspiration": "early Rome/Etruria", "personality": ["builder", "merchant"], "regions": ["central_italy", "cisalpine_north", "sardinia_contested", "corsica_sphere"], "tiles": 27, "signature_units": ["disciplined_infantry", "colonia_founders"], "economy": "naval_supremacy_trade_fleets", "first_contact_act": 3, "flag": "procedural_crest:she_wolf_on_crimson" },
+    { "id": "iberian_hill_kingdoms", "name": "Iberian Hill Kingdoms", "polity": "Kingdoms (confederation)", "inspiration": "Celtiberian tribes", "personality": ["nomad"], "regions": ["iberia_east", "iberia_central", "iberia_south"], "tiles": 24, "signature_units": ["shadowsteel_raiders", "forest_cavalry"], "economy": "iron_hills_guerrilla", "first_contact_act": 5, "flag": "procedural_crest:boar_on_green", "doctrine": "guerrilla_no_front_lines" },
+    { "id": "gaulish_grand_kingdom", "name": "Gaulish Grand Kingdom", "polity": "Grand Kingdom", "inspiration": "Gallic federations", "personality": ["warlord"], "regions": ["gaul_south", "gaul_central", "gaul_north_edge"], "tiles": 20, "signature_units": ["heavy_horse_companions", "champions"], "economy": "cultural_prestige_forest_control", "first_contact_act": 5, "flag": "procedural_crest:golden_horse_on_forest_green", "doctrine": "champion_duels_prestige_diplomacy" },
+    { "id": "mesopotamian_satrapy", "name": "Mesopotamian Imperial Satrapy", "polity": "Satrapy", "inspiration": "Neo-Assyrian/Babylonian", "personality": ["zealot", "builder"], "regions": ["mesopotamia", "syria"], "tiles": 20, "signature_units": ["great_siege_train", "tribute_levies"], "economy": "magma_glass_deep_crystal_siege", "first_contact_act": 5, "flag": "procedural_crest:winged_disc_on_midnight_blue", "doctrine": "tribute_web_vassal_minors" }
+  ],
+
+  "minor_factions": [
+    { "id": "arcadian_hill_clans", "act": 1, "region": "arcadia", "behavior": "autumn_farm_raids_forest_ambush" },
+    { "id": "free_clans_of_mani", "act": 1, "region": "mani", "behavior": "defensive_never_first_strike" },
+    { "id": "argive_remnant", "act": 1, "region": "argolis_argos", "behavior": "diplomatic_absorbable" },
+    { "id": "isthmus_brigands", "act": 1, "region": "corinthia", "behavior": "toll_robbery" },
+    { "id": "aetolian_raiders", "act": 2, "region": "west_greece_fringe", "behavior": "seasonal_raid_leagues" },
+    { "id": "cretan_corsairs", "act": 2, "region": "crete", "behavior": "naval_raids_on_coasts" },
+    { "id": "thracian_horse_clans", "act": 2, "region": "thrace_west", "behavior": "horse_raids_tribute_demands" },
+    { "id": "byzantion_city_state", "act": 3, "region": "thrace_east", "behavior": "courtable_strait_tolls" },
+    { "id": "corsair_strongholds", "act": 4, "region": "cilicia", "behavior": "sea_lane_piracy" },
+    { "id": "desert_and_steppe_tribes", "act": 5, "region": "libya_numidia_dacia", "behavior": "raids_recruitable_auxiliaries" }
+  ],
+
+  "victory_conditions": [
+    { "id": "mare_nostrum", "req": "control_all_14_sea_zones_and_every_port_region" },
+    { "id": "dominion", "req": "own_or_vassalize_250_of_361_tiles" },
+    { "id": "eight_thrones", "req": "all_8_empires_defeated_vassalized_or_allied_under_hegemony" },
+    { "id": "golden_age", "req": "cultural_ascendancy_at_empire_stage" }
+  ],
+
+  "settlement_name_banks": {
+    "greek_prefix": ["Nea", "Kalli", "Mega", "Palaio", "Chryso", "Lefko"],
+    "greek_root": ["polis", "ion", "ea", "os", "inthos", "ande"],
+    "epithets": ["on-the-Sea", "of-the-Isthmus", "of-the-Two-Harbors", "Under-the-Mountain", "of-the-Straits"]
+  }
+}

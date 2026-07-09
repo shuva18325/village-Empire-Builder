@@ -83,7 +83,7 @@
  │ Hazards: ≋ heat3  ∴ ash2  ☁ smoke1  │
  │ ─────────── RESOURCES ───────────── │
  │  obsidian ●●●  lapis ●●  magma_glass●│
- │  (adamantite: none here — core only)│
+ │  (adamantine: none here — core only)│
  │ ─────────── POPULATION ──────────── │
  │  Pop 14 / cap 18   Miners 8 Hunters2│
  │  ⚠ 3 miners Heat-Stressed 🥵 (no gear)

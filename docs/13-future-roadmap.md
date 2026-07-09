@@ -47,7 +47,7 @@ themed to fit the world (renamed from real-world holidays so they feel native to
 | **Day of Ancestors** | Remembrance | Annual (Autumn) | +faith, +combat morale (*Heroic* boost) | Remember the fallen |
 | **Bounty Fair** | Market fair | Triggered by trade milestone | **+trade income & gold**, +opinion with AI | Merchants gather; deals flow |
 | **Victory Jubilee** | Triumph | Triggered after a great war win | Empire-wide +morale, +happiness | Parade of the victorious army |
-| **First Ore Day** | (native) | Triggered on first adamantite refined | +happiness + a permanent mining morale perk | The age of the black metal begins |
+| **First Ore Day** | (native) | Triggered on first adamantine refined | +happiness + a permanent mining morale perk | The age of the black metal begins |
 | **Long Night's Vigil** | Winter solstice | Deep Winter | Reduces winter penalties, +stability | Enduring the longest night together |
 | **Green Rites** | Spring festival | Spring | +farm yield this season, +birth rate | Blessing the fields |
 
@@ -80,7 +80,7 @@ Phaser) so it runs anywhere and reads the `/data` seeds directly. (Engine choice
 | **P3 — Economy & mining** | Mines, tool ladder, materials, refining, gear, hazards | Resources, mining, gear, storage | 2 sessions |
 | **P4 — Tech & crafting** | Tech tree, weapon/armor tiers, workshops | Technology, crafting, capital tiers T1–T3 + **flags** | 2 sessions |
 | **P5 — Military & AI** | Recruit/equip/march, combat model, 1 rival AI, diplomacy v1 | Military, combat, AI, diplomacy | 2–3 sessions |
-| **P6 — Volcano & endgame** | Volcanic extraction, adamantite, eruptions, T4–T5, victory | Hazard crescendo, elite tier, win/loss | 2 sessions |
+| **P6 — Volcano & endgame** | Volcanic extraction, adamantine, eruptions, T4–T5, victory | Hazard crescendo, elite tier, win/loss | 2 sessions |
 | **P7 — Living world** | Disasters, festivals/holidays, religion, culture, migration | Extra Mechanics, polish, balance | 2+ sessions |
 | **P8 — Polish** | Art pass, audio, onboarding, save/load, options | UX, accessibility, tuning | ongoing |
 
@@ -105,7 +105,7 @@ Grouped by area. Priority: ⭐ high / ◐ medium / ○ nice-to-have.
 - ◐ **Supply/demand market prices** for trade (dynamic economy).
 - ◐ **Pollution/sustainability** meter for heavy industry (industrious tension).
 - ○ **Artisan luxury goods** chain (jewelry from gold/lapis) for happiness/trade.
-- ⭐ **Gunpowder era** (sulfur → cannons) as an era beyond adamantite.
+- ⭐ **Gunpowder era** (sulfur → cannons) as an era beyond adamantine.
 
 ### Population & society
 - ⭐ **Named notable citizens / heroes** (generals, master smiths, sages) with traits.

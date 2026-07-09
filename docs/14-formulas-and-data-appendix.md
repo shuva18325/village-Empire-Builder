@@ -20,7 +20,7 @@
 | `RESERVE_UNIT.surface` | 500 | Base reserve per abundance for surface nodes (regenerating) |
 | `RESERVE_UNIT.shallow` | 800 | Shallow ore reserve unit |
 | `RESERVE_UNIT.deep` | 1500 | Deep ore reserve unit |
-| `RESERVE_UNIT.core` | 300 | Core (adamantite) reserve unit — small & precious |
+| `RESERVE_UNIT.core` | 300 | Core (adamantine) reserve unit — small & precious |
 | `BASE_FOOD_PER_POP` | 1.0 / day | Food consumed per adult per day |
 | `DEPENDENT_FOOD` | 0.5 / day | Food per child/elder |
 | `HAPPINESS_BASELINE` | 50 | Neutral happiness |
@@ -130,7 +130,7 @@ yield/day = base_rate[material]
           × hazard_modifier                                // 1 − Σ(active hazard slows)
           × happiness_factor
 
-tool_mult:  wood 1.0 · stone 1.4 · lapis 1.9 · iron 2.5 · adamantite 3.5
+tool_mult:  wood 1.0 · stone 1.4 · lapis 1.9 · iron 2.5 · adamantine 3.5
 mining_skill_mult: novice 0.7 · skilled 1.0 · expert 1.4 · master 1.8
 happiness_factor = 0.5 + happiness/100          // 0.5..1.5
 reserve -= yield/day (until depleted; surface food/wood regen per §4-style)
@@ -216,7 +216,7 @@ Productivity multiplier from happiness: `prod_mult = 0.6 + happiness/100 × 0.8`
 unit_power   = (weapon_ATK + role_bonus) × grade_mult × skill_mult
 unit_defense = (armor_DEF + role_bonus) × terrain_def_mult × fort_mult
 
-grade_mult:  tribal 1.0 · copper 1.3 · bronze 1.6 · iron 2.0 · steel 2.6 · adamantite 3.6
+grade_mult:  tribal 1.0 · copper 1.3 · bronze 1.6 · iron 2.0 · steel 2.6 · adamantine 3.6
 skill_mult:  green 0.8 · trained 1.0 · veteran 1.3 · elite 1.6
 
 round_damage(A→D) = Σ A.unit_power × morale_A × leadership_A × comp_bonus(A,D)
@@ -246,7 +246,7 @@ on_eruption:
   core_crew_casualties = crew × (1 − evac_fraction) × (1 − exosuit_rating) × SEVERITY
   building_damage      = DL_loss 5–20 on the tile + damage to volcanic_mine
   ash/smoke spread     = +2 intensity on tile & neighbors for 1 season
-  payback              = expose new nodes: obsidian(always), adamantite(chance 30%)
+  payback              = expose new nodes: obsidian(always), adamantine(chance 30%)
 ```
 
 ---
@@ -285,9 +285,9 @@ tech costs in [06 §4](06-technology.md#4-tech-node-table-costs--unlocks); build
 
 ### 12.2 Tech era vs. weapon & material tier (they advance together)
 ```
- Era:      Stone → Copper → Bronze → Iron → Steel → Adamantite
- Weapon:   spear   copper   bronze   iron   steel   ADAMANTITE
- Pickaxe:  wood    stone    lapis    iron   iron    ADAMANTITE
+ Era:      Stone → Copper → Bronze → Iron → Steel → Adamantine
+ Weapon:   spear   copper   bronze   iron   steel   ADAMANTINE
+ Pickaxe:  wood    stone    lapis    iron   iron    ADAMANTINE
  Capital:  T1      T2       T2/T3    T3     T4       T5
  Danger    safe    low      low      med    high     DEADLY (volcano core)
  you brave:region  hills    hills    mtn    volcano  volcano CORE
@@ -296,7 +296,7 @@ tech costs in [06 §4](06-technology.md#4-tech-node-table-costs--unlocks); build
 ### 12.3 The reward-vs-danger curve (Pillar P2, quantified)
 ```
  material value
-   ▲                                              ● adamantite (danger 5)
+   ▲                                              ● adamantine (danger 5)
    │                                    ● magma glass (danger 4)
    │                          ● lapis / obsidian (danger 3)
    │                ● iron/coal (danger 2)
@@ -322,7 +322,7 @@ A concrete playthrough tracing the systems (illustrative, at default balance):
 | Yr2 | pop ~40 | Build Smithy; make stone→lapis pickaxe; mine copper→bronze | Bronze spears; danger tiles now reachable |
 | Yr3–4 | pop ~120 → **T3** | `metallurgy`; Forge + Armory; **rename capital** "Ashford"; first colony | Iron age; first real army; diplomacy opens |
 | Yr5–7 | pop ~400 → **T4** | `engineering`+`volcanic_extraction`; claim volcanic slope; Fort + Industrial Hub + supply line | Steel; mining obsidian/lapis under heat gear; AI gets nervous |
-| Yr8–10 | pop ~1000 → **T5** | `adamantite_refinement`; brave the core (exosuits, evac on tremors); Grand Plaza + Wonder | **Adamantite army**; survive an eruption (new nodes!); **Grand Capital — victory range** |
+| Yr8–10 | pop ~1000 → **T5** | `adamantine_refinement`; brave the core (exosuits, evac on tremors); Grand Plaza + Wonder | **Adamantine army**; survive an eruption (new nodes!); **Grand Capital — victory range** |
 
 This is the intended **10-ish-year** arc through the four emotional phases — pacing is a knob;
 the *shape* is the design.

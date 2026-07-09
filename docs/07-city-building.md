@@ -33,7 +33,7 @@ on complete: tile.development_level += DL_gain[building]  (up to 100)
 | **Early** | wood, thatch | House, Tent, Hunter's Lodge, Palisade |
 | **Mid** | stone, clay/**brick**, timber | Market, Granary, Walls, Smithy, Aqueduct |
 | **Military** | metals (copper/iron/steel) | Barracks, Armory, Watchtower, Fort |
-| **Advanced/Elite** | steel + **rare minerals** (magma glass, lapis, adamantite) | University, Foundry, Volcanic Mine, Wonders, Grand Plaza |
+| **Advanced/Elite** | steel + **rare minerals** (magma glass, lapis, adamantine) | University, Foundry, Volcanic Mine, Wonders, Grand Plaza |
 
 ---
 
@@ -75,7 +75,7 @@ headline output. Full numbers live in [`/data/game-data.json`](../data/game-data
 | Smelter | `smelter` | stone×30, clay×20 | smelting | Refine ore → metal |
 | Forge | `forge` | stone×40, iron×20 | metallurgy | Iron goods, gear |
 | Foundry | `foundry` | brick×50, iron×40 | advanced_forging | **Steel** |
-| **Adamantite Forge** | `adamantite_forge` | steel×40, magma_glass×20 | adamantite_refinement | **Adamantite** goods |
+| **Adamantine Forge** | `adamantine_forge` | steel×40, magma_glass×20 | adamantine_refinement | **Adamantine** goods |
 | Sawmill | `sawmill` | wood×20 | roads_&_wheels | wood→timber |
 | Alchemy Lab | `alchemy_lab` | brick×30, quartz×10 | chemistry | Reagents, medicine (sulfur) |
 
@@ -123,7 +123,7 @@ headline output. Full numbers live in [`/data/game-data.json`](../data/game-data
 |----------|----|------|------|--------|
 | **Grand Plaza** | `grand_plaza` | brick×200, lapis×30, steel×20 | grand_culture | Capital centerpiece; big happiness/culture (T5 gate) |
 | **Wonder (various)** | `wonder_*` | huge, rare mats | grand_culture | Unique civilization-defining bonuses (victory-relevant) |
-| Great Forge (Wonder) | `wonder_great_forge` | adamantite×20, steel×80 | adamantite_refinement | Empire-wide crafting speed & quality |
+| Great Forge (Wonder) | `wonder_great_forge` | adamantine×20, steel×80 | adamantine_refinement | Empire-wide crafting speed & quality |
 | Great Library (Wonder) | `wonder_great_library` | brick×200, quartz×40 | education | Empire-wide research surge |
 | Colossus/Beacon (Wonder) | `wonder_beacon` | stone×300, lapis×50 | grand_culture | Vision + morale across the map |
 
@@ -159,7 +159,7 @@ Most buildings upgrade through levels, each raising output and DL for more mater
   Library ─▶ University ─▶ Great Library(Wonder)
   Palisade ─▶ Stone Walls ─▶ Fortifications
   Mine ─▶ Deep Mine ─▶ Volcanic Mine
-  Smithy ─▶ Forge ─▶ Foundry ─▶ Adamantite Forge
+  Smithy ─▶ Forge ─▶ Foundry ─▶ Adamantine Forge
   Village center ─▶ Town Hall ─▶ City Hall ─▶ Grand Plaza   (this drives the capital tier look)
 ```
 

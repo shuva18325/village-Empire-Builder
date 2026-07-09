@@ -35,7 +35,12 @@ extract it, and its **main uses**.
 | Iron | `iron` | Mountain, tundra (deep) | iron pickaxe* / lapis pickaxe | Iron tools/weapons/armor, steel input |
 | Coal | `coal` | Mountain (deep) | stone+ pickaxe | **Fuel** for smelting/forging; steel |
 | Silver/Gold | `silver`,`gold` | Mountain, crystal cavern (deep) | iron pickaxe | Currency, luxury, decree cost sink |
-| **Adamantite ore** | `adamantite_ore` | **Volcano core only** | **adamantite pickaxe** | The apex weapons/armor/buildings |
+| **Adamantine ore** | `adamantine_ore` | **Volcano core only** | **adamantine pickaxe** | The apex weapons/armor/buildings |
+
+> **Campaign extension:** the Mediterranean Campaign adds the **Iron Pantheon** — a ladder of
+> named exotic iron-family metals (mystic iron → ember-iron → … → mythril → starforged iron →
+> celestium → adamantine) with regional sources and signature effects. See
+> **[doc 15 §Iron Pantheon](15-mediterranean-campaign.md#iron-pantheon)**.
 
 `*` iron is the classic chicken-and-egg: you first mine iron with a **lapis pickaxe** (see §3),
 then craft iron pickaxes to mine it faster and reach deeper veins.
@@ -100,7 +105,7 @@ touch and **multiplies** yield. This is the cleanest expression of Pillar P3.
 | **Stone pickaxe** | `pick_stone` | wood + stone | + copper, tin, coal, obsidian, limestone | ×1.4 | The workhorse of the early game |
 | **Lapis pickaxe** | `pick_lapis` | wood + lapis + copper | + **iron**, quartz, lapis, deep commons | ×1.9 | The key that opens the **iron age**; lapis is itself semi-rare |
 | **Iron pickaxe** | `pick_iron` | timber + iron | + deep iron, silver/gold, magma glass* | ×2.5 | Faster & reaches deep veins; needs `metallurgy` |
-| **Adamantite pickaxe** | `pick_adamantite` | steel + adamantite_ore | + **adamantite ore**, volcanic core mats | ×3.5 | End-tier; the only way to mine the volcano's heart |
+| **Adamantine pickaxe** | `pick_adamantine` | steel + adamantine_ore | + **adamantine ore**, volcanic core mats | ×3.5 | End-tier; the only way to mine the volcano's heart |
 
 `*` magma glass also needs **heat gear** regardless of pickaxe.
 
@@ -114,7 +119,7 @@ touch and **multiplies** yield. This is the cleanest expression of Pillar P3.
                                                                           │
                             metallurgy tech + iron ──▶ pick_iron ─▶ deep iron, magma glass
                                                                           │
-                       steel + adamantite_ore ──▶ pick_adamantite ─▶ VOLCANO CORE
+                       steel + adamantine_ore ──▶ pick_adamantine ─▶ VOLCANO CORE
 ```
 
 > **The bootstrap moment:** to make an iron pickaxe you need iron, but efficient iron mining
@@ -180,7 +185,7 @@ faster. Gear is stored in an **equipment pool** and auto-assigned to workers on 
 ```
    Miner on a VOLCANO CORE tile — the full gear check:
    ┌───────────────────────────────────────────────────────────┐
-   │ needs: pick_adamantite ✔  heat clothing/exosuit ✔          │
+   │ needs: pick_adamantine ✔  heat clothing/exosuit ✔          │
    │        breathing mask ✔    shoring(engineering) ✔          │
    │ if any ✘ → heavy health loss, high accident_chance,        │
    │           Heat-Stressed + Ash-Choked statuses, morale drop │
@@ -204,7 +209,7 @@ faster. Gear is stored in an **equipment pool** and auto-assigned to workers on 
 ```
 
 **Rare-ore risk/reward (your brief, crystallized):** mining rare ores (lapis, magma glass,
-adamantite) **raises danger and accident risk** but is the **only** path to advanced weapons,
+adamantine) **raises danger and accident risk** but is the **only** path to advanced weapons,
 elite buildings, and the Grand Capital. The game constantly poses: *"Push deeper now, or
 consolidate first?"*
 
@@ -219,21 +224,21 @@ Working a volcano is a whole mini-game layered on normal mining.
 |-------------|-----|
 | Tech `volcanic_extraction` | To even claim/build here (see [01 §5](01-world-and-tiles.md#5-tech-locked-tiles)) |
 | **Volcanic Mine** building | Special reinforced mine (steel + magma glass) |
-| `pick_adamantite` (for adamantite) | Tool gate for core materials |
+| `pick_adamantine` (for adamantine) | Tool gate for core materials |
 | Heat gear + masks + (ideally) exosuits | Survive heat/ash/smoke/toxic |
 | Shoring / `engineering` | Manage unstable ground |
 | A garrison (danger 4–5) | Wildlife/rivals covet the volcano too |
 
-### 7.2 Adamantite yield curve
-Adamantite is **deliberately scarce**. A core node might hold only a handful of units, mined
+### 7.2 Adamantine yield curve
+Adamantine is **deliberately scarce**. A core node might hold only a handful of units, mined
 **slowly**:
 
 ```
-adamantite_yield/day ≈ 0.2 … 1.0  (per fully-equipped elite crew, before eruptions)
+adamantine_yield/day ≈ 0.2 … 1.0  (per fully-equipped elite crew, before eruptions)
 ```
 
-Refining ore → bars is a further step at the **Adamantite Forge** (needs `adamantite_refinement`).
-Getting your first adamantite **bar** should take real investment — it's the endgame material.
+Refining ore → bars is a further step at the **Adamantine Forge** (needs `adamantine_refinement`).
+Getting your first adamantine **bar** should take real investment — it's the endgame material.
 
 ### 7.3 Eruptions (risk event)
 Telegraphed by **tremors** (1–2 day warning; a shaking icon + alert). On eruption:
@@ -243,7 +248,7 @@ Telegraphed by **tremors** (1–2 day warning; a shaking icon + alert). On erupt
 | Casualties | Unevacuated core crews take heavy losses (mitigated by exosuits/evac decree) |
 | Building damage | Volcanic mine & nearby buildings damaged; tile DL drops |
 | Ash/smoke spike | Zones spread to neighboring tiles for ~1 season (−vision, −morale) |
-| **Payback** | New nodes exposed — often **fresh adamantite/obsidian** (the volcano gives back) |
+| **Payback** | New nodes exposed — often **fresh adamantine/obsidian** (the volcano gives back) |
 
 **Managing eruptions** = watch tremors, pull crews on warning (or gamble for one more haul),
 keep evac routes (roads) clear, and repair fast. Full tables:
@@ -263,7 +268,7 @@ Some materials must be **refined** before use. Refining happens in dedicated bui
   copper + tin ──(Smelter)──▶ BRONZE
   iron + coal ──(Smelter)──▶ (wrought iron) ──(Foundry)──▶ STEEL
   limestone + fuel ──(Kiln)──▶ mortar/cement
-  adamantite_ore + steel + magma glass ──(Adamantite Forge)──▶ ADAMANTITE (bars)
+  adamantine_ore + steel + magma glass ──(Adamantine Forge)──▶ ADAMANTINE (bars)
   sulfur + charcoal + quartz ──(Alchemy Lab)──▶ reagents (medicine / roadmap: gunpowder)
 ```
 

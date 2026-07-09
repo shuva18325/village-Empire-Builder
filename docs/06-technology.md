@@ -37,7 +37,7 @@ weapon tiers.
 | **E2 Copper/Bronze** | First metals | T2–T3 | Mining, bronze working, architecture |
 | **E3 Iron** | Advanced society | T3 | Metallurgy, engineering, literature |
 | **E4 Steel** | Industrial dawn | T4 | Advanced forging, volcanic extraction |
-| **E5 Adamantite** | Apex age | T5 | Adamantite refinement, elite everything |
+| **E5 Adamantine** | Apex age | T5 | Adamantine refinement, elite everything |
 | **E6 Civilization** | Endgame/legacy | T5 | Grand wonders, golden-age decrees (roadmap-expandable) |
 
 ---
@@ -78,9 +78,9 @@ E4 STEEL
   engineering ──▶ logistics (better supply lines, larger armies)
   literature ──▶ bureaucracy (more decree slots, admin efficiency)
 
-E5 ADAMANTITE
-  [advanced_forging]+[volcanic_extraction] ──▶ [adamantite_refinement] ─┬─▶ adamantite_arms (elite weapons)
-                                                                        ├─▶ adamantite_armor (exosuit/plate)
+E5 ADAMANTINE
+  [advanced_forging]+[volcanic_extraction] ──▶ [adamantine_refinement] ─┬─▶ adamantine_arms (elite weapons)
+                                                                        ├─▶ adamantine_armor (exosuit/plate)
                                                                         └─▶ core_engineering (survive core)
   chemistry/alchemy (sulfur) ──▶ medicine (cure plague) ──▶ (roadmap: gunpowder)
 
@@ -124,12 +124,12 @@ RP costs are tunable baselines. "Unlocks" lists the headline effects.
 | `volcanic_extraction` | E4 | advanced_forging | 700 | **Claim volcano tiles**, Volcanic Mine, heat/shoring/ventilation |
 | `bureaucracy` | E4 | literature | 500 | +decree slots, admin efficiency |
 | `medicine` | E4 | education | 520 | Hospital, cure plague, −death rate |
-| `adamantite_refinement` | E5 | advanced_forging+volcanic_extraction | 1100 | **Adamantite** forge/weapons/armor/pickaxe, exosuit, (T5 gate) |
+| `adamantine_refinement` | E5 | advanced_forging+volcanic_extraction | 1100 | **Adamantine** forge/weapons/armor/pickaxe, exosuit, (T5 gate) |
 | `statecraft` | E6 | bureaucracy+education | 900 | Alliances, vassals, hegemony diplomacy |
 | `grand_culture` | E6 | education+philosophy | 950 | **Wonders**, golden-age decrees, Grand Plaza |
 
 *(Techs like `smelting`, `alloys`, `philosophy`, `machinery`, `construction`, `steelworking`,
-`heat_shielding`, `shoring`, `ventilation`, `core_engineering`, `adamantite_arms/armor` are
+`heat_shielding`, `shoring`, `ventilation`, `core_engineering`, `adamantine_arms/armor` are
 minor nodes chained under the marquee ones above; see the tree in §3. Full list mirrored in
 [`/data/game-data.json`](../data/game-data.json).)*
 
@@ -142,9 +142,9 @@ minor nodes chained under the marquee ones above; see the tree in §3. Full list
 | **New buildings** | architecture→Market/Armory, education→University, engineering→Fort/Aqueduct, volcanic_extraction→Volcanic Mine |
 | **Exploration** | prospecting (see ore in fog), mountaineering/boats (reach new terrain), logistics (range) |
 | **Colonization** | roads_&_wheels (supply), architecture (settlements), terrain techs (which tiles you can settle) |
-| **Armies** | metallurgy (real army), logistics (bigger), advanced_forging/adamantite (elite units) |
+| **Armies** | metallurgy (real army), logistics (bigger), advanced_forging/adamantine (elite units) |
 | **Mining gear** | volcanic_extraction (heat_shielding, shoring, ventilation), metallurgy (iron pickaxe) |
-| **Weapon tiers** | primitive_tools→bronze_working→metallurgy→advanced_forging→adamantite_refinement |
+| **Weapon tiers** | primitive_tools→bronze_working→metallurgy→advanced_forging→adamantine_refinement |
 
 ---
 
@@ -160,9 +160,9 @@ minor nodes chained under the marquee ones above; see the tree in §3. Full list
 
 ```
   TECH TREE (columns = eras)
-  E1 STONE      E2 BRONZE       E3 IRON          E4 STEEL         E5 ADAMANTITE
+  E1 STONE      E2 BRONZE       E3 IRON          E4 STEEL         E5 ADAMANTINE
   ┌─────────┐   ┌───────────┐   ┌────────────┐   ┌─────────────┐  ┌──────────────┐
-  │prim_tools│─▶│ mining    │─▶│ metallurgy  │─▶│adv_forging   │─▶│adamantite_ref │◀ current
+  │prim_tools│─▶│ mining    │─▶│ metallurgy  │─▶│adv_forging   │─▶│adamantine_ref │◀ current
   │ ✔        │   │ ✔         │   │ ✔          │   │ ▓▓▓▓░ 62%   │  │ 🔒 (locked)  │
   ├─────────┤   ├───────────┤   ├────────────┤   ├─────────────┤  ├──────────────┤
   │ farming ✔│   │bronze_wk ✔│   │ engineering│   │volcanic_extr│  │  …           │

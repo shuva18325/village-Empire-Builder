@@ -12,6 +12,11 @@
 
 ## 1. World shape & size
 
+> **Campaign note:** the shipped **Mediterranean Campaign** replaces this generic worldgen
+> with a staged, authored map — 60-tile Peloponnese → 100-tile Greece → 300–400-tile
+> Mediterranean. See **[doc 15](15-mediterranean-campaign.md)**. Everything below still
+> defines the *tile model itself* (used by both) and the random-map **Skirmish** mode.
+
 - The world is a grid of **~100 tiles** (default **10 × 10**, configurable 8×8 … 12×12).
 - Default topology: **square grid with 8-neighbor adjacency** (orthogonal + diagonal).
   A **hex option** is on the [roadmap](13-future-roadmap.md); the data model is
@@ -88,7 +93,7 @@ danger, and which tech (if any) is required to claim it.
 | **Tundra** | `▓▓` | 3 | Low | ○ | furs (game), iron, **lapis(some)** | `cold_survival` | 2–3 |
 | **Water (lake/coast)** | `~~` | — (boat) | — | ●●● (fish) | fish, salt, pearls, reeds | `boats` to use | 0–1 |
 | **Volcanic slope** | `▒▒` | 3 | V.Low | ○ | **obsidian, magma glass, lapis, sulfur** | `volcanic_extraction` | 3–4 |
-| **Volcano (core)** | `🌋` | 4 | V.Low | ○ | **adamantite ore**, obsidian, magma glass, lapis | `volcanic_extraction` (+gear) | 4–5 |
+| **Volcano (core)** | `🌋` | 4 | V.Low | ○ | **adamantine ore**, obsidian, magma glass, lapis | `volcanic_extraction` (+gear) | 4–5 |
 
 **Locked terrains** (`unlock_tech ≠ null`) show as claimable-but-greyed with a padlock and a
 tooltip naming the required tech. This is a core **Pillar P3** gate: the map visibly promises
@@ -106,7 +111,7 @@ and a **depth**:
 | `surface` | Foraged/gathered | Any worker; no mine needed (berries, wood on forest, salt flats) |
 | `shallow` | Shallow dig | Basic mine + wooden/stone pickaxe |
 | `deep` | Deep vein | Mine + iron pickaxe, sometimes shoring/tech |
-| `core` | Volcanic core | Volcanic mine + adamantite pickaxe + hazard gear |
+| `core` | Volcanic core | Volcanic mine + adamantine pickaxe + hazard gear |
 
 Full material taxonomy (metals, minerals, building materials, food) and the mining rules that
 consume these nodes live in **[Resources, Mining & Gear](03-resources-mining-and-gear.md)**.
@@ -114,7 +119,7 @@ Quick reference of what appears where:
 
 | Category | Members | Typical terrains |
 |----------|---------|------------------|
-| **Metals** | copper, tin, iron, (bronze*, steel*, adamantite) | hills, mountains, volcano core |
+| **Metals** | copper, tin, iron, (bronze*, steel*, adamantine) | hills, mountains, volcano core |
 | **Minerals** | clay, limestone, obsidian, salt, coal, lapis, quartz, sulfur, magma glass | plains/hills (clay), desert (salt/obsidian), mountain (coal/quartz), volcano (obsidian/lapis/magma glass) |
 | **Building** | wood, stone, brick*, timber | forest (wood/timber), hills/mountain (stone) |
 | **Food** | berries, fish, game meat, wild grain, mushrooms | everywhere per terrain |
@@ -294,7 +299,7 @@ high-reward regions (Pillar P2).
 
 Volcano tiles are the game's **risk-reward crescendo**. A volcano `core` tile can hold **all**
 of: heat, ash, smoke, toxic fumes, and unstable ground — plus the **eruption** event — and it
-is the **only** source of **adamantite ore**.
+is the **only** source of **adamantine ore**.
 
 ```
         A VOLCANO TILE (core)
@@ -303,10 +308,10 @@ is the **only** source of **adamantite ore**.
    │  ∴∴∴   ash zone (−vision)      │     • obsidian      (shallow)
    │  ☁☁☁   smoke zone (−morale)   │     • magma glass   (deep)
    │  ☠☠     sulfur/toxic vents     │     • lapis veins   (deep)
-   │  ※※※   unstable ground        │     • ADAMANTITE ORE(core, ultra-rare)
+   │  ※※※   unstable ground        │     • ADAMANTINE ORE(core, ultra-rare)
    │        + ERUPTION risk event   │
    └───────────────────────────────┘
-   Mining here needs: volcanic mine + adamantite-tier tools +
+   Mining here needs: volcanic mine + adamantine-tier tools +
    heat gear + breathing masks + shoring — and nerves.
 ```
 
@@ -315,10 +320,10 @@ mining intensity and certain seasons). Telegraphed by **tremor warnings** (1–2
 On eruption:
 - Workers in the core without top gear/evac take heavy casualties.
 - Buildings on the tile take damage; DL can drop.
-- **New resource nodes** can be exposed (fresh obsidian/adamantite) — the volcano *gives back*.
+- **New resource nodes** can be exposed (fresh obsidian/adamantine) — the volcano *gives back*.
 - Ash/smoke zones spike and spread to neighbors for a season.
 
-Full eruption tables, tremor mechanics, and adamantite yield curves are in
+Full eruption tables, tremor mechanics, and adamantine yield curves are in
 [Resources & Mining §Volcanic](03-resources-mining-and-gear.md#volcanic-mining) and the
 [Extra Mechanics disasters](12-extra-mechanics.md#disasters) section.
 
@@ -336,7 +341,7 @@ They carry a `tags` entry and a one-off bonus. Suggested set (a world rolls **3�
 | `crystal_cavern` | Crystal Cavern | Rich **quartz/lapis**, +research when worked | Deep; needs iron+ tools |
 | `great_herd` | Great Herd Grounds | Massive renewable game (food engine) | Attracts predators (danger↑) |
 | `obsidian_fields` | Obsidian Fields | Surface obsidian without a volcano | In hostile terrain (desert edge) |
-| `adamantite_heart` | The Adamantite Heart | The single richest adamantite node in the world | Inside the deadliest volcano; endgame prize |
+| `adamantine_heart` | The Adamantine Heart | The single richest adamantine node in the world | Inside the deadliest volcano; endgame prize |
 | `fertile_delta` | Fertile Delta | +50% food base, huge pop cap | Flood-prone (needs levees) |
 | `world_wonder_site` | Wonder Site | Enables a unique **Wonder** building (victory-relevant) | Contested by AI who also wants it |
 
