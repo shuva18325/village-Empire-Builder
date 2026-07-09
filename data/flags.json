@@ -1,0 +1,73 @@
+{
+  "$schema_note": "Flag registry for Empire Builder. Each entry pairs with a PNG in assets/flags/ (see docs/02-capital-and-flags.md and assets/flags/README.md). The game lists any flag that has BOTH a PNG on disk AND an entry here. These are EXAMPLE entries with placeholder art paths — replace/extend to match the real PNGs you provide. Balance rule: total power budget <= ~10 per flag (1% ~= 1 pt, a 'special' ~= 3-5 pts).",
+  "version": "0.1",
+  "power_budget_max": 10,
+  "flags": [
+    {
+      "id": "ember_crown",
+      "name": "The Ember Crown",
+      "png": "assets/flags/flag_ember_crown.png",
+      "symbolism": "A crown of flame over black stone — mastery of the volcano and the forge.",
+      "flavor": "Raised first by the smiths who dared the burning slopes; a promise that this people bends fire to its will.",
+      "culture_tag": "industrious",
+      "bonuses": { "culture": 0, "morale": 5, "military": 3, "special": "mining_heat_resist_+5%" },
+      "unlock": "always",
+      "variant_of": null
+    },
+    {
+      "id": "green_vale",
+      "name": "Banner of the Green Vale",
+      "png": "assets/flags/flag_green_vale.png",
+      "symbolism": "A golden sheaf on green — abundance, harvest, and a people rooted to the land.",
+      "flavor": "Woven by the first farmers of the river meadows, blessed each spring at the planting.",
+      "culture_tag": "peaceful",
+      "bonuses": { "culture": 3, "morale": 2, "military": 0, "special": "birth_rate_+3%" },
+      "unlock": "always",
+      "variant_of": null
+    },
+    {
+      "id": "silver_wolf",
+      "name": "The Silver Wolf",
+      "png": "assets/flags/flag_silver_wolf.png",
+      "symbolism": "A running wolf on grey — the hunt, the pack, loyalty, and the wild north.",
+      "flavor": "Carried by hunters who tamed the tundra's edge; the pack that never breaks.",
+      "culture_tag": "aggressive",
+      "bonuses": { "culture": 0, "morale": 3, "military": 4, "special": "hunt_yield_+5%" },
+      "unlock": "always",
+      "variant_of": null
+    },
+    {
+      "id": "twin_rivers",
+      "name": "The Twin Rivers",
+      "png": "assets/flags/flag_twin_rivers.png",
+      "symbolism": "Two blue rivers meeting on white — trade, unity, and the crossroads of nations.",
+      "flavor": "Flown over the first great market where two peoples met and chose commerce over war.",
+      "culture_tag": "mercantile",
+      "bonuses": { "culture": 2, "morale": 1, "military": 0, "special": "trade_income_+5%" },
+      "unlock": "always",
+      "variant_of": null
+    },
+    {
+      "id": "azure_star",
+      "name": "The Azure Star",
+      "png": "assets/flags/flag_azure_star.png",
+      "symbolism": "A lapis star on deep blue — knowledge, faith, and the light that guides the age.",
+      "flavor": "Stitched by the scholars of the first library; a star to steer a civilization by.",
+      "culture_tag": "scholarly",
+      "bonuses": { "culture": 4, "morale": 0, "military": 0, "special": "research_+4%" },
+      "unlock": "tier:T3",
+      "variant_of": null
+    },
+    {
+      "id": "ember_crown_royal",
+      "name": "The Ember Crown (Royal)",
+      "png": "assets/flags/flag_ember_crown_royal.png",
+      "symbolism": "The Ember Crown wreathed in gold — the mature, imperial form of the founding banner.",
+      "flavor": "Unfurled when a settlement of smiths became a capital of kings.",
+      "culture_tag": "industrious",
+      "bonuses": { "culture": 2, "morale": 5, "military": 3, "special": "mining_heat_resist_+5%" },
+      "unlock": "tier:T3",
+      "variant_of": "ember_crown"
+    }
+  ]
+}
