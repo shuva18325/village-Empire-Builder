@@ -74,9 +74,9 @@ Phaser) so it runs anywhere and reads the `/data` seeds directly. (Engine choice
 
 | Phase | Deliverable (playable) | Systems included | Rough scope |
 |:-----:|------------------------|------------------|-------------|
-| **P0 — Skeleton** | Renders the 10×10 map from `/data`, fog, tile select, top bar | World gen, tile model, camera, HUD shell | 1 session |
-| **P1 — Survival core** | Hunt, forage, food, pop grows/starves, build House/Farm | Population, food loop, basic buildings, seasons v1 | 1–2 sessions |
-| **P2 — Expansion** | Explore→claim→colonize→develop→roads; DL; second tile | Colonization pipeline, roads/supply, fog reveal | 1–2 sessions |
+| **P0 — Skeleton** ✅ | ~~Renders the map, fog, tile select, top bar~~ **Built in [`/game`](../game/README.md)** on the Peloponnese campaign map | World data, tile model, HUD shell | done |
+| **P1 — Survival core** ✅ | ~~Hunt, forage, food, pop grows/starves, buildings~~ **Built**: pop/jobs, happiness+statuses, seasons, 13 buildings incl. Breeding Hub, decrees | Population, food loop, buildings, seasons v1 | done |
+| **P2 — Expansion** ✅ | ~~Explore→claim→colonize→develop→roads~~ **Built** + tribes, raids, tile warfare, T2 flags, Act I victory | Colonization pipeline, roads, fog, combat-lite | done |
 | **P3 — Economy & mining** | Mines, tool ladder, materials, refining, gear, hazards | Resources, mining, gear, storage | 2 sessions |
 | **P4 — Tech & crafting** | Tech tree, weapon/armor tiers, workshops | Technology, crafting, capital tiers T1–T3 + **flags** | 2 sessions |
 | **P5 — Military & AI** | Recruit/equip/march, combat model, 1 rival AI, diplomacy v1 | Military, combat, AI, diplomacy | 2–3 sessions |

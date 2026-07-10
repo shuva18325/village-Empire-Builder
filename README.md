@@ -84,7 +84,8 @@ To add or override a flag: drop `flag_<id>.png` into `assets/flags/` and add/edi
 | **Mediterranean Campaign** | ✅ Designed ([doc 15](docs/15-mediterranean-campaign.md) + [campaign data](data/campaign-mediterranean.json)) |
 | Flags | ✅ 6 integrated (PNG + SVG + registry) |
 | Seed data (`data/`) | ✅ Core + campaign tables |
-| Playable prototype | ⏳ To be built in follow-up sessions (see [roadmap](docs/13-future-roadmap.md)) |
+| **Playable build (P0–P2)** | ✅ **[`game/`](game/README.md)** — open `game/index.html`: Peloponnese map, fog, population/happiness, buildings (incl. Breeding Hub), expansion, tribes & tile warfare, T2 + flags, Act I victory |
+| Later phases (P3–P8) | ⏳ Mining/tech/AI nations/naval — see [roadmap](docs/13-future-roadmap.md) |
 
 ## License
 
