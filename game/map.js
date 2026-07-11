@@ -1,10 +1,30 @@
 // ============================================================================
-// EMPIRE BUILDER — map renderer (canvas) + tile picking
+// EMPIRE BUILDER — map renderer: a political map of the Hellenic world.
+// Land is drawn as a merged landmass with real coastline strokes, shallow-water
+// halos, region colours & labels (styled after classical atlas maps).
 // ============================================================================
 window.MapView = (function () {
   const D = window.DATA, C = D.CONST;
-  let cv, ctx, selected = null;
+  let cv, ctx, selected = null, hoverKey = null;
   const flagImgs = {};                      // id -> HTMLImageElement
+
+  // region colour palette (reference: prefecture-coloured atlas maps)
+  const RCOL = {
+    achaea: '#e8a04a', corinthia: '#ddc85a', elis: '#8fbf5f', arcadia: '#46aa9f',
+    argolis_argos: '#e3de5e', argolis_nafplio: '#c9d45f', messenia: '#e8b854',
+    laconia: '#a9c957', mani: '#c98d64', vatika: '#9cc465', kythira: '#67b8d8',
+    attica: '#f0e04a', boeotia: '#d8ae56', euboea: '#84b25e', thessaly: '#e59a4c',
+    epirus: '#58b396', macedonia: '#e5aa47', thrace: '#93d0d8', cyclades: '#d8b46f',
+    crete: '#54c0a8', naegean: '#b4ccd8', illyria: '#c48d6d', moesia: '#a8b870',
+    ionia: '#d8bc62', lydia: '#c8a256', magna_graecia: '#d0b05c', sicily: '#e0c060',
+    iberia_east: '#c08a5e',
+  };
+  const shade = (hex, f) => {               // lighten (f>0) / darken (f<0)
+    const n = parseInt(hex.slice(1), 16);
+    const ch = s => Math.max(0, Math.min(255, Math.round(((n >> s) & 255) * (1 + f))));
+    return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+  };
+  const TERR_SHADE = { plains: 0.04, grass: 0.0, forest: -0.16, hills: -0.10, mtn: -0.24 };
 
   function init() {
     cv = document.getElementById('map');
@@ -22,176 +42,225 @@ window.MapView = (function () {
 
   const px = t => 10 + t.c * C.TILE;
   const py = t => 10 + t.r * C.TILE;
-
-  function onClick(e) {
+  const pick = e => {
     const rect = cv.getBoundingClientRect();
     const x = (e.clientX - rect.left) * (cv.width / rect.width) - 10;
     const y = (e.clientY - rect.top) * (cv.height / rect.height) - 10;
-    const c = Math.floor(x / C.TILE), r = Math.floor(y / C.TILE);
-    const t = Game.state && Game.state.tiles[c + ',' + r];
+    return Math.floor(x / C.TILE) + ',' + Math.floor(y / C.TILE);
+  };
+  function onClick(e) {
+    const t = Game.state && Game.state.tiles[pick(e)];
     selected = t ? t.key : null;
     if (window.UI) UI.selectTile(selected);
     draw();
   }
-  let hoverKey = null;
   function onMove(e) {
-    const rect = cv.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (cv.width / rect.width) - 10;
-    const y = (e.clientY - rect.top) * (cv.height / rect.height) - 10;
-    const c = Math.floor(x / C.TILE), r = Math.floor(y / C.TILE);
-    const k = c + ',' + r;
+    const k = pick(e);
     if (k !== hoverKey) { hoverKey = k; draw(); }
   }
+
+  // a tile is "on the map" (drawn as land) vs "beyond the horizon" (silhouette)
+  const visible = t => !t.overseas || Game.overseasReachable(t);
 
   function draw() {
     if (!ctx) return;
     const G = Game.state;
-    // sea
-    const grad = ctx.createLinearGradient(0, 0, 0, cv.height);
-    grad.addColorStop(0, '#2e5674'); grad.addColorStop(1, '#1e3c54');
+    const S = C.TILE;
+
+    // ---- the sea ----
+    const grad = ctx.createLinearGradient(0, 0, cv.width, cv.height);
+    grad.addColorStop(0, '#4a7fa5'); grad.addColorStop(0.5, '#3a6b91');
+    grad.addColorStop(1, '#2c567a');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, cv.width, cv.height);
-    // subtle waves
-    ctx.strokeStyle = 'rgba(255,255,255,.05)';
-    for (let i = 0; i < 14; i++) {
+    ctx.strokeStyle = 'rgba(255,255,255,.045)';
+    for (let i = 0; i < 22; i++) {
       ctx.beginPath();
-      ctx.arc(40 + (i * 97) % (cv.width - 60), 30 + (i * 61) % (cv.height - 50), 8, Math.PI * .1, Math.PI * .9);
+      ctx.arc(30 + (i * 137) % (cv.width - 60), 24 + (i * 83) % (cv.height - 40), 7, Math.PI * .1, Math.PI * .9);
       ctx.stroke();
     }
     if (!G) return;
     const conn = Game.roadConnected();
+    const tiles = Object.values(G.tiles);
+    const vis = tiles.filter(visible);
 
-    // Kythira strait dashes
-    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.setLineDash([4, 5]); ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(10 + 8 * C.TILE + C.TILE / 2, 10 + 8 * C.TILE + C.TILE - 4);
-    ctx.lineTo(10 + 8 * C.TILE + C.TILE / 2, 10 + 9 * C.TILE + 4);
-    ctx.stroke(); ctx.setLineDash([]);
+    // ---- beyond-the-horizon silhouettes (distant lands, no detail) ----
+    tiles.filter(t => !visible(t)).forEach(t => {
+      ctx.fillStyle = 'rgba(190,205,215,.10)';
+      ctx.fillRect(px(t), py(t), S, S);
+    });
 
-    // land tiles
-    Object.values(G.tiles).forEach(t => {
-      const x = px(t), y = py(t), s = C.TILE - 3;
-      if (!t.explored) {                                  // FOG
-        ctx.fillStyle = '#141a24';
-        rr(x, y, s, s, 7); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,.18)';
-        ctx.font = '18px serif'; ctx.textAlign = 'center';
-        ctx.fillText('?', x + s / 2, y + s / 2 + 6);
-        if (G.scouts.some(sc => sc.key === t.key)) {
-          ctx.fillStyle = '#f4c400'; ctx.font = '13px sans-serif';
-          ctx.fillText('🥾', x + s / 2, y + s - 8);
+    // ---- shallow-water shelf halo around the landmass ----
+    ctx.fillStyle = 'rgba(150,200,220,.30)';
+    vis.forEach(t => ctx.fillRect(px(t) - 4, py(t) - 4, S + 8, S + 8));
+
+    // ---- land fill (region colour, terrain-shaded; fog = unknown dark land) ----
+    vis.forEach(t => {
+      const x = px(t), y = py(t);
+      if (!t.explored) {
+        ctx.fillStyle = '#2b333f';
+        ctx.fillRect(x, y, S, S);
+      } else {
+        const base = RCOL[t.region] || '#c0b070';
+        ctx.fillStyle = shade(base, TERR_SHADE[t.terrain] || 0);
+        ctx.fillRect(x, y, S, S);
+        if (t.owner !== 'player') {          // unowned/enemy: slight wash
+          ctx.fillStyle = 'rgba(20,26,36,.18)';
+          ctx.fillRect(x, y, S, S);
         }
-        return;
-      }
-      // terrain
-      ctx.fillStyle = D.TERRAIN[t.terrain].col;
-      rr(x, y, s, s, 7); ctx.fill();
-      // explored-but-unowned dim
-      if (t.owner !== 'player') { ctx.fillStyle = 'rgba(10,14,22,.35)'; rr(x, y, s, s, 7); ctx.fill(); }
-      // roads
-      if (t.road) {
-        ctx.strokeStyle = '#e8d9a8'; ctx.lineWidth = 4; ctx.setLineDash([]);
-        Game.neighbors(t.key).forEach(n => {
-          if ((n.road || n.key === G.capital) && n.owner === 'player') {
-            ctx.beginPath();
-            ctx.moveTo(x + s / 2, y + s / 2);
-            ctx.lineTo(px(n) + s / 2, py(n) + s / 2);
-            ctx.stroke();
-          }
-        });
-      }
-      // owner outline
-      if (t.owner === 'player') {
-        ctx.strokeStyle = '#f4c400'; ctx.lineWidth = 2.5;
-        rr(x + 1, y + 1, s - 2, s - 2, 6); ctx.stroke();
-      } else if (t.owner !== 'neutral') {
-        ctx.strokeStyle = D.FACTIONS[t.owner].col; ctx.lineWidth = 2;
-        ctx.setLineDash([5, 3]); rr(x + 1, y + 1, s - 2, s - 2, 6); ctx.stroke(); ctx.setLineDash([]);
-      }
-      // icons
-      ctx.textAlign = 'center'; ctx.font = '15px sans-serif';
-      if (t.key === G.capital) {
-        ctx.font = '20px sans-serif'; ctx.fillText('🏛️', x + s / 2, y + s / 2 + 2);
-      } else if (t.settled) {
-        ctx.fillText('🏘️', x + s / 2, y + s / 2 + 2);
-      } else if (t.camp && t.owner !== 'neutral' && t.owner !== 'player') {
-        ctx.fillText(D.FACTIONS[t.owner].icon, x + s / 2, y + s / 2 + 2);
-      } else if (t.terrain === 'mtn') {
-        ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.font = '13px sans-serif';
-        ctx.fillText('▲', x + s / 2, y + s / 2 + 4);
-      } else if (t.terrain === 'forest') {
-        ctx.fillStyle = 'rgba(0,40,0,.4)'; ctx.font = '12px sans-serif';
-        ctx.fillText('♣', x + s / 2, y + s / 2 + 4);
-      }
-      // seat star / sacred / ore / port
-      ctx.font = '10px sans-serif';
-      if (t.seat) { ctx.fillStyle = '#ffe9a0'; ctx.fillText('★', x + 9, y + 13); }
-      if (t.sacred) { ctx.fillText('✦', x + s - 9, y + 13); }
-      if (t.ore && t.owner === 'player') { ctx.fillText('⛏', x + s - 9, y + s - 6); }
-      if (t.port) { ctx.fillText('⚓', x + 9, y + s - 6); }
-      // danger skulls (explored, unowned, dangerous)
-      if (t.owner !== 'player' && t.danger >= 3) {
-        ctx.fillText('☠', x + s - 9, y + 13);
-      }
-      // buildings pip count
-      if (t.owner === 'player' && t.buildings.length > 1) {
-        ctx.fillStyle = 'rgba(0,0,0,.55)';
-        ctx.fillRect(x + 4, y + s - 13, 16, 10);
-        ctx.fillStyle = '#fff'; ctx.font = '8px sans-serif';
-        ctx.fillText(t.buildings.length, x + 12, y + s - 5);
-      }
-      // player flag banner on capital + connected settled tiles
-      if (t.owner === 'player' && G.flag && (t.key === G.capital || (conn.has(t.key) && (t.settled || t.road)))) {
-        const im = flagImgs[G.flag.id];
-        const big = t.key === G.capital;
-        const w = big ? 22 : 14, h = big ? 14 : 9;
-        if (im && im.complete && im.naturalWidth) {
-          ctx.drawImage(im, x + s - w - 3, y + 3, w, h);
-          ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
-          ctx.strokeRect(x + s - w - 3, y + 3, w, h);
-        } else {
-          ctx.fillStyle = '#f4c400'; ctx.fillRect(x + s - w - 3, y + 3, w, h);
-        }
-      }
-      // construction hammer
-      if (G.builds.some(b => b.key === t.key) || G.roadsBuilding.some(rb => rb.key === t.key)) {
-        ctx.font = '11px sans-serif'; ctx.fillText('🔨', x + s / 2 + 14, y + 14);
       }
     });
 
-    // region borders (draw last, thicker where regions differ)
-    ctx.strokeStyle = 'rgba(20,20,25,.5)'; ctx.lineWidth = 1.5;
-    Object.values(G.tiles).forEach(t => {
-      const x = px(t), y = py(t), s = C.TILE - 3;
-      [[1, 0, x + s, y, x + s, y + s], [0, 1, x, y + s, x + s, y + s]].forEach(([dc, dr, x1, y1, x2, y2]) => {
+    // ---- faint inner tile grid on explored land ----
+    ctx.strokeStyle = 'rgba(0,0,0,.09)'; ctx.lineWidth = 1;
+    vis.forEach(t => { if (t.explored) ctx.strokeRect(px(t) + .5, py(t) + .5, S - 1, S - 1); });
+
+    // ---- roads ----
+    ctx.strokeStyle = '#efe0b0'; ctx.lineWidth = 3.4; ctx.lineCap = 'round';
+    vis.forEach(t => {
+      if (!t.road) return;
+      Game.neighbors(t.key).forEach(n => {
+        if ((n.road || n.key === G.capital) && n.owner === 'player' && (n.c > t.c || (n.c === t.c && n.r > t.r) || n.key === G.capital)) {
+          ctx.beginPath();
+          ctx.moveTo(px(t) + S / 2, py(t) + S / 2);
+          ctx.lineTo(px(n) + S / 2, py(n) + S / 2);
+          ctx.stroke();
+        }
+      });
+    });
+
+    // ---- region borders (thin ink) + COASTLINE (bold ink around the landmass) ----
+    const isLand = (c, r) => { const n = G.tiles[c + ',' + r]; return n && visible(n); };
+    vis.forEach(t => {
+      const x = px(t), y = py(t);
+      // edges: [dc,dr, x1,y1,x2,y2]
+      [[1, 0, x + S, y, x + S, y + S], [-1, 0, x, y, x, y + S],
+       [0, 1, x, y + S, x + S, y + S], [0, -1, x, y, x + S, y]].forEach(([dc, dr, x1, y1, x2, y2]) => {
         const n = G.tiles[(t.c + dc) + ',' + (t.r + dr)];
-        if (n && n.region !== t.region && t.explored && n.explored) {
+        if (!n || !visible(n)) {              // COAST
+          ctx.strokeStyle = '#233246'; ctx.lineWidth = 2.6;
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        } else if (n.region !== t.region && t.explored && n.explored && (dc === 1 || dr === 1)) {
+          ctx.strokeStyle = 'rgba(35,35,30,.55)'; ctx.lineWidth = 1.4;
           ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
         }
       });
     });
 
-    // hover + selection
+    // ---- ownership tint borders ----
+    vis.forEach(t => {
+      const x = px(t), y = py(t);
+      if (!t.explored) return;
+      if (t.owner === 'player') {
+        ctx.strokeStyle = '#f4c400'; ctx.lineWidth = 2.2;
+        ctx.strokeRect(x + 1.5, y + 1.5, S - 3, S - 3);
+      } else if (t.owner !== 'neutral') {
+        ctx.strokeStyle = D.FACTIONS[t.owner].col; ctx.lineWidth = 1.8;
+        ctx.setLineDash([4, 3]);
+        ctx.strokeRect(x + 1.5, y + 1.5, S - 3, S - 3);
+        ctx.setLineDash([]);
+      }
+    });
+
+    // ---- per-tile icons & marks ----
+    ctx.textAlign = 'center';
+    vis.forEach(t => {
+      const x = px(t), y = py(t);
+      if (!t.explored) {
+        ctx.fillStyle = 'rgba(255,255,255,.16)';
+        ctx.font = '13px serif';
+        ctx.fillText('?', x + S / 2, y + S / 2 + 5);
+        if (G.scouts.some(sc => sc.key === t.key)) {
+          ctx.font = '11px sans-serif'; ctx.fillText('🥾', x + S / 2, y + S - 4);
+        }
+        return;
+      }
+      // terrain glyphs (subtle, atlas-style)
+      ctx.fillStyle = 'rgba(30,30,20,.5)'; ctx.font = '10px sans-serif';
+      if (t.terrain === 'mtn') ctx.fillText('▲', x + S / 2, y + S / 2 + 3);
+      else if (t.terrain === 'hills') ctx.fillText('◠', x + S / 2, y + S / 2 + 3);
+      else if (t.terrain === 'forest') { ctx.fillStyle = 'rgba(0,45,0,.5)'; ctx.fillText('♣', x + S / 2, y + S / 2 + 3); }
+      // settlement / camp icons on top
+      ctx.font = '13px sans-serif';
+      if (t.key === G.capital) { ctx.font = '16px sans-serif'; ctx.fillText('🏛️', x + S / 2, y + S / 2 + 4); }
+      else if (t.settled) ctx.fillText('🏘️', x + S / 2, y + S / 2 + 4);
+      else if (t.camp && t.owner !== 'neutral' && t.owner !== 'player')
+        ctx.fillText(D.FACTIONS[t.owner].icon, x + S / 2, y + S / 2 + 4);
+      // small marks
+      ctx.font = '9px sans-serif';
+      if (t.seat) { ctx.fillStyle = '#8a5a00'; ctx.fillText('★', x + 7, y + 10); }
+      if (t.sacred) { ctx.fillStyle = '#2a4a8a'; ctx.fillText('✦', x + S - 7, y + 10); }
+      if (t.port) { ctx.fillStyle = '#1a3a5a'; ctx.fillText('⚓', x + 7, y + S - 4); }
+      if (t.owner !== 'player' && t.danger >= 3) { ctx.fillStyle = '#7a1a10'; ctx.fillText('☠', x + S - 7, y + 10); }
+      if (t.volcanic || (t.hazards && t.hazards.length)) { ctx.font = '10px sans-serif'; ctx.fillText('🌋', x + S / 2 - 8, y + 11); }
+      // ore dots
+      if (t.ores && t.ores.length) {
+        t.ores.forEach((o, i) => {
+          const od = D.ORES[o]; if (!od) return;
+          ctx.fillStyle = od.dot;
+          ctx.beginPath(); ctx.arc(x + S - 7 - i * 7, y + S - 7, 2.8, 0, 7); ctx.fill();
+          ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = .7; ctx.stroke();
+        });
+      }
+      // building pips
+      if (t.owner === 'player' && t.buildings.length > 1) {
+        ctx.fillStyle = 'rgba(0,0,0,.55)';
+        ctx.fillRect(x + 3, y + S - 12, 13, 9);
+        ctx.fillStyle = '#fff'; ctx.font = '7.5px sans-serif';
+        ctx.fillText(t.buildings.length, x + 9.5, y + S - 5);
+      }
+      // player flag banner (capital big, connected settlements small)
+      if (t.owner === 'player' && G.flag && (t.key === G.capital || (conn.has(t.key) && (t.settled || t.road)))) {
+        const im = flagImgs[G.flag.id];
+        const big = t.key === G.capital;
+        const w = big ? 20 : 12, h = big ? 12.5 : 7.5;
+        const fx = x + S - w - 2, fy = y + 2;
+        if (im && im.complete && im.naturalWidth) ctx.drawImage(im, fx, fy, w, h);
+        else { ctx.fillStyle = '#f4c400'; ctx.fillRect(fx, fy, w, h); }
+        // Porphyrogennetos: at T3 the capital banner is framed in imperial purple
+        ctx.strokeStyle = (big && G.tier >= 3) ? '#5B2A83' : '#222';
+        ctx.lineWidth = (big && G.tier >= 3) ? 2.2 : 1;
+        ctx.strokeRect(fx, fy, w, h);
+      }
+      // construction hammer
+      if (G.builds.some(b => b.key === t.key) || G.roadsBuilding.some(rb => rb.key === t.key)) {
+        ctx.font = '10px sans-serif'; ctx.fillText('🔨', x + S - 8, y + S / 2);
+      }
+    });
+
+    // ---- region labels at centroids (atlas style) ----
+    const cent = {};
+    vis.forEach(t => {
+      if (!t.explored) return;
+      (cent[t.region] = cent[t.region] || { x: 0, y: 0, n: 0, nm: t.regionName });
+      cent[t.region].x += px(t) + S / 2; cent[t.region].y += py(t) + S / 2; cent[t.region].n++;
+    });
+    const SHORT = { 'Argolis — Argos': 'ARGOS', 'Argolis — Nafplio': 'NAFPLIO',
+      'Vatika / Monemvasia': 'MONEMVASIA', 'Boeotia & Phocis': 'BOEOTIA',
+      'Kythira Strait': 'KYTHIRA', 'Iberia (East)': 'IBERIA', 'North Aegean Isle': '' };
+    ctx.font = '700 9px system-ui, sans-serif';
+    Object.values(cent).forEach(c0 => {
+      if (c0.n < 2) return;
+      const lx = c0.x / c0.n, ly = c0.y / c0.n;
+      const label = SHORT[c0.nm] !== undefined ? SHORT[c0.nm] : c0.nm.toUpperCase();
+      if (!label) return;
+      ctx.fillStyle = 'rgba(255,250,235,.75)';
+      ctx.fillText(label, lx + .8, ly + .8);
+      ctx.fillStyle = 'rgba(30,25,15,.95)';
+      ctx.fillText(label, lx, ly);
+    });
+
+    // ---- hover & selection ----
     const hov = G.tiles[hoverKey];
-    if (hov) {
-      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1.5;
-      rr(px(hov), py(hov), C.TILE - 3, C.TILE - 3, 7); ctx.stroke();
+    if (hov && visible(hov)) {
+      ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.6;
+      ctx.strokeRect(px(hov) + .5, py(hov) + .5, S - 1, S - 1);
     }
     const sel = selected && G.tiles[selected];
-    if (sel) {
+    if (sel && visible(sel)) {
       ctx.strokeStyle = '#7fd4ff'; ctx.lineWidth = 3;
-      rr(px(sel) - 1, py(sel) - 1, C.TILE - 1, C.TILE - 1, 8); ctx.stroke();
+      ctx.strokeRect(px(sel) - 1, py(sel) - 1, S + 2, S + 2);
     }
-  }
-
-  function rr(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
   }
 
   return { init, draw, get selected() { return selected; }, select: k => { selected = k; draw(); } };

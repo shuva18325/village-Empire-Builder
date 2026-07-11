@@ -94,6 +94,16 @@ button { font: inherit; }
 .bopt:disabled { opacity: .35; cursor: not-allowed; }
 .blist { display: flex; flex-wrap: wrap; gap: 4px; padding: 5px 0; }
 
+/* industry panel */
+.isec { padding: 5px 0; border-bottom: 1px dotted #2a3348; font-size: 12.5px; line-height: 1.7; }
+.isec:last-child { border-bottom: none; }
+.army { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+
+/* tech tree */
+.tbar { height: 7px; background: var(--panel2); border-radius: 4px; margin: 4px 0 2px; overflow: hidden; }
+.tfill { height: 100%; background: linear-gradient(90deg, #4a8fd4, var(--gold)); }
+.fcard .dyn { color: #b57edc; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; }
+
 /* log */
 #logPanel { flex: 1; min-height: 120px; overflow: hidden; display: flex; flex-direction: column; }
 #log { overflow-y: auto; font-size: 12.5px; }
@@ -128,3 +138,11 @@ button { font: inherit; }
 /* scrollbars */
 ::-webkit-scrollbar { width: 9px; }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
+
+/* small screens: stack map over panels so the game stays playable anywhere */
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  main { flex-direction: column; }
+  #left { min-height: 380px; }
+  #right { width: 100%; border-left: none; border-top: 2px solid var(--line); }
+}

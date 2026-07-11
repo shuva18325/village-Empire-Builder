@@ -77,8 +77,8 @@ Phaser) so it runs anywhere and reads the `/data` seeds directly. (Engine choice
 | **P0 — Skeleton** ✅ | ~~Renders the map, fog, tile select, top bar~~ **Built in [`/game`](../game/README.md)** on the Peloponnese campaign map | World data, tile model, HUD shell | done |
 | **P1 — Survival core** ✅ | ~~Hunt, forage, food, pop grows/starves, buildings~~ **Built**: pop/jobs, happiness+statuses, seasons, 13 buildings incl. Breeding Hub, decrees | Population, food loop, buildings, seasons v1 | done |
 | **P2 — Expansion** ✅ | ~~Explore→claim→colonize→develop→roads~~ **Built** + tribes, raids, tile warfare, T2 flags, Act I victory | Colonization pipeline, roads, fog, combat-lite | done |
-| **P3 — Economy & mining** | Mines, tool ladder, materials, refining, gear, hazards | Resources, mining, gear, storage | 2 sessions |
-| **P4 — Tech & crafting** | Tech tree, weapon/armor tiers, workshops | Technology, crafting, capital tiers T1–T3 + **flags** | 2 sessions |
+| **P3 — Economy & mining** ✅ | ~~Mines, tool ladder, materials, refining, gear, hazards~~ **Built** + weapon/armor tiers, trade economy, mid-game navy & 162-tile map expansion (Greece/Balkans/Asia Minor/Italy/Iberia) | Resources, mining, gear, storage, naval | done |
+| **P4 — Tech & crafting** ✅ | **Built**: 24-tech tree (8 branches), acts I–III w/ Greece-unification gate, capital T1–T3 incl. Porphyrogennetos, dynastic flags, culture & festivals | Technology, crafting, tiers, flags | done |
 | **P5 — Military & AI** | Recruit/equip/march, combat model, 1 rival AI, diplomacy v1 | Military, combat, AI, diplomacy | 2–3 sessions |
 | **P6 — Volcano & endgame** | Volcanic extraction, adamantine, eruptions, T4–T5, victory | Hazard crescendo, elite tier, win/loss | 2 sessions |
 | **P7 — Living world** | Disasters, festivals/holidays, religion, culture, migration | Extra Mechanics, polish, balance | 2+ sessions |

@@ -16,15 +16,16 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ FAIL ') + msg)
 
 console.log('— world data —');
 const tiles = Object.values(DATA.TILES);
-ok(tiles.length === 60, `60 land tiles authored (got ${tiles.length})`);
-ok(tiles.filter(t => t.seat).length === 11, '11 region seats');
+ok(tiles.filter(t => !t.seaGroup).length === 60, `60 Peloponnese tiles (got ${tiles.filter(t => !t.seaGroup).length})`);
+ok(tiles.filter(t => t.seat && !t.seaGroup).length === 11, '11 Peloponnese region seats');
 ok(tiles.filter(t => t.camp).length > 0, 'hostile camps exist');
 ok(DATA.STARTS.length === 7, '7 starting regions');
-ok(DATA.FLAGS.length === 5, '5 flags wired');
+ok(DATA.FLAGS.length === 10, '10 flags wired, all with dynasties');
+ok(DATA.FLAGS.every(f => f.dynasty), 'every flag names its dynasty');
 
 console.log('— new game (Sparta) —');
 const G = Game.newGame('sparta');
-ok(G.capital === '5,6', 'capital at Sparta');
+ok(G.capital === '16,13', 'capital at Sparta');
 ok(G.tiles[G.capital].settled, 'capital settled');
 ok(Game.popCap() > 0, 'pop capacity > 0');
 ok(G.res.metal === 5, 'Sparta metal bias applied');
@@ -124,6 +125,137 @@ ok(Game.state.pop > 0, 'state restored');
 console.log('— long-run stability (2 game years) —');
 Game.skipDays(120);
 ok(Game.state.pop >= 0 && isFinite(Game.state.pop), `sim stable after 120 more days (pop=${Game.state.pop.toFixed(1)}, day=${Game.state.day})`);
+
+console.log('\n=== PHASE 3: economy & mining (fresh game) ===');
+ok(Object.values(DATA.TILES).length === 162, `map is 162 tiles (got ${Object.values(DATA.TILES).length})`);
+ok(DATA.TOOLS.length === 6 && DATA.GEAR_TIERS.length === 6, '6 tool tiers & 6 gear tiers');
+const P = Game.newGame('sparta');            // clean state for Phase 3
+P.pop = 40; P.res.food = 300; P.res.wood = 400; P.res.stone = 300;
+P.jobs = { farmer: 0, hunter: 0, builder: 0, miner: 3, soldier: 0 };
+
+console.log('— mining ores by tool —');
+const ore = P.tiles['16,12'];                  // Laconia / Mt. Taygetos: copper+tin+iron
+ok(ore && ore.ores.includes('copper_ore') && ore.ores.includes('iron_ore'), 'Taygetos has copper & iron ore');
+ore.owner = 'player'; ore.settled = true; ore.explored = true; ore.buildings = ['village_center', 'mine'];
+Game.skipDays(6);
+ok((P.res.copper_ore || 0) > 0, `copper ore mined with stone tools (${(P.res.copper_ore||0).toFixed(1)})`);
+ok((P.res.iron_ore || 0) === 0, 'iron ore LOCKED behind bronze tools (0 mined)');
+
+console.log('— refining chain ore → ingot —');
+ore.buildings.push('smelter'); P.res.copper_ore = 30;
+Game.skipDays(4);
+ok((P.res.copper || 0) > 0, `smelter made copper ingots (${(P.res.copper||0).toFixed(1)})`);
+
+console.log('— tool ladder —');
+P.tiles[P.capital].buildings.push('tool_workshop'); P.res.copper = 10;
+ok(Game.canCraftTool(), 'can craft Copper Tools (workshop + copper)');
+Game.craftTool();
+ok(P.tool === 1, `upgraded to Copper Tools (tool=${P.tool})`);
+
+console.log('— weapon/armor tiers —');
+P.tiles[P.capital].buildings.push('barracks', 'forge');
+P.res.food = 300;                            // top up (storage cap clamps, so refill before recruiting)
+for (let i = 0; i < 4; i++) Game.recruit();
+ok(P.army.militia >= 4, `recruited militia (${P.army.militia})`);
+P.res.copper = 10;
+ok(Game.canEquip(1), 'can equip copper tier (forge + copper + militia)');
+Game.equipTroops(1, 2);
+ok(P.army.copper === 2, `equipped 2 to copper (militia ${P.army.militia}, copper ${P.army.copper})`);
+ok(Game.forceStats(2).atk === DATA.GEAR_TIERS[1].power * 2, 'force stats use gear-tier power');
+
+console.log('— mining hazards (Mani volcanic) —');
+const mani = P.tiles['15,12'];
+ok(mani.volcanic && mani.hazards.length > 0, 'Mani tile is volcanic w/ hazards');
+mani.owner = 'player'; mani.settled = true; mani.explored = true; mani.buildings = ['village_center', 'mine'];
+let hazardFired = false;
+for (let i = 0; i < 250 && !hazardFired; i++) { P.hazardCd = {}; P.res.food = 300; const h = P.stats.hazards; Game.skipDays(1); if (P.stats.hazards > h) hazardFired = true; }
+ok(hazardFired, `a mining hazard fired on the volcanic mine (${P.stats.hazards} total)`);
+
+console.log('— naval & overseas reach —');
+const coast = P.tiles['17,14'];                // Laconia coastal hills
+coast.owner = 'player'; coast.settled = true; coast.buildings = ['village_center', 'shipyard'];
+ok(Game.countB('shipyard') === 1, 'shipyard built');
+P.res.wood = 200; P.res.iron = 20; P.techs.push('naval1', 'naval2', 'naval3'); // P4: naval techs required
+ok(Game.canBuildShip('iron_ship'), 'can build iron-hulled ship');
+Game.buildShip('iron_ship');
+ok(P.navalTier === 1, `naval tier 1 after iron ship (${P.navalTier})`);
+const cyc = Object.values(P.tiles).find(t => t.region === 'cyclades' && t.port);
+ok(cyc && Game.overseasReachable(cyc), 'Cyclades (overseas naval-1) reachable by sea');
+const iberia = Object.values(P.tiles).find(t => t.region === 'iberia_east' && t.port);
+ok(iberia && !Game.overseasReachable(iberia), 'Iberia (naval-2) still needs lapis ships');
+
+console.log('— trade / market —');
+P.tiles[P.capital].buildings.push('resource_market');
+P.res.wood = 100; const goldBefore = P.res.gold;
+Game.marketSell('wood', 10);
+ok(P.res.gold > goldBefore && P.res.wood === 90, 'market sell wood → gold');
+
+console.log('— expansion regions —');
+ok(Object.values(P.tiles).filter(t => t.seaGroup === 'greece').length === 40, 'Greece expansion = 40 tiles');
+ok(Object.values(P.tiles).filter(t => t.overseas).length === 72, '72 overseas tiles');
+
+console.log('\n=== PHASE 4: tech tree, acts, tiers, culture (fresh game) ===');
+ok(DATA.TECHS.length === 24 && DATA.TECH_BRANCHES.length === 8, '24 techs across 8 branches');
+const Q = Game.newGame('sparta');
+Q.pop = 40; Q.res.wood = 400; Q.res.stone = 300; Q.res.food = 300;
+
+console.log('— tech gating on buildings —');
+const qcap = Q.tiles[Q.capital];
+ok(!Game.canBuild(qcap, 'mine'), 'Mine locked before Prospecting');
+ok(Game.setResearch('mining1'), 'research Prospecting started');
+Game.skipDays(60);
+ok(Game.hasTech('mining1'), `Prospecting done (techs: ${Q.techs.join(',') || 'none'})`);
+Q.res.wood = 400; Q.res.stone = 300;
+const hillsQ = Object.values(Q.tiles).find(t => t.region === 'laconia' && t.terrain !== 'plains' && DATA.TERRAIN[t.terrain].mine);
+hillsQ.owner = 'player'; hillsQ.settled = true; hillsQ.explored = true; hillsQ.buildings = ['village_center'];
+ok(Game.canBuild(hillsQ, 'mine'), 'Mine unlocked after Prospecting');
+
+console.log('— act gating: mainland Greece locked until the Peloponnese is united —');
+const attica = Object.values(Q.tiles).find(t => t.region === 'attica');
+attica.explored = true;
+ok(!Game.canClaim(attica) && Q.act === 1, 'Attica unclaimable in Act I');
+// unite the Peloponnese by decree of the test harness
+Object.values(Q.tiles).filter(t => !t.seaGroup).forEach(t => { t.owner = 'player'; t.warriors = 0; t.camp = false; t.explored = true; });
+Game.skipDays(1);
+ok(Q.act === 2, `Act II reached (act=${Q.act}) — Greece opens`);
+ok(!Game.canResearch(DATA.TECHS.find(t => t.id === 'naval1')), 'Shipwright still locked (needs Act III)');
+// unify mainland Greece
+Object.values(Q.tiles).filter(t => t.naval === -1).forEach(t => { t.owner = 'player'; t.warriors = 0; t.camp = false; t.explored = true; });
+Game.skipDays(1);
+ok(Q.act === 3, `Act III reached (act=${Q.act}) — the Kingdom of Hellas`);
+ok(Game.canResearch(DATA.TECHS.find(t => t.id === 'naval1')), 'Shipwright researchable after unification');
+
+console.log('— capital T3 (Porphyrogennetos) —');
+Q.techs.push('cult1', 'cult2', 'forge1', 'forge2');
+Q.pop = 85; Q.res.food = 600; qcap.dl = 35;
+qcap.buildings.push('forge', 'shrine', 'shrine', 'shrine', 'shrine');
+for (let i = 0; i < 10; i++) qcap.buildings.push('house');   // house the city so happiness ≥50
+Game.skipDays(2);
+ok(Q.tier === 3, `Grand Capital reached (tier=${Q.tier}, happy=${Game.happiness()}%)`);
+
+console.log('— culture & festivals —');
+qcap.buildings.push('amphitheater');
+const cultBefore = Q.culture;
+Game.skipDays(5);
+ok(Q.culture > cultBefore, `culture accumulating (${Q.culture.toFixed(1)})`);
+Q.culture = 100;
+ok(Game.canFest('heroes'), 'Festival of Heroes available (cult1 + culture)');
+Game.holdFest('heroes');
+ok(Q.fest.heroes > 0, `Festival of Heroes running (${Q.fest.heroes}d)`);
+ok(!Game.canFest('heroes'), 'festival cooldown enforced');
+
+console.log('— cultural buildings & housing techs —');
+Q.techs.push('house1', 'house2', 'cult3');
+Q.res.stone = 500; Q.res.wood = 400; Q.res.copper = 20; Q.res.gold = 100; Q.res.lapis = 10;
+ok(Game.canBuild(hillsQ, 'stone_houses'), 'Stone Houses buildable (Masonry)');
+ok(Game.canBuild(hillsQ, 'artisan_district'), 'Artisan District buildable (High Culture)');
+const preSlots = Game.slots(hillsQ);
+ok(preSlots >= 5, `Urban Planning +1 slot (slots=${preSlots})`);
+ok(Game.canBuild(hillsQ, 'shrine_of_kings'), 'Shrine of Kings buildable at T3');
+
+console.log('— dynasty on the banner —');
+Game.chooseFlag('golden_rho');
+ok(Q.flag.dynasty === 'House of Lascaris', `dynasty recorded (${Q.flag.dynasty})`);
 
 console.log(fails === 0 ? '\nALL SMOKE TESTS PASSED ✅' : `\n${fails} FAILURES ❌`);
 process.exit(fails ? 1 : 0);

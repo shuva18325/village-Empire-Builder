@@ -68,6 +68,10 @@ vector art** and rasterized to the PNGs in this folder, plus one unlockable vari
 | `flag_holy_cross.png` | The Holy Cross | White flared cross on red |
 | `flag_vergina_sun.png` | The Sun of Vergina | 16-ray Macedonian star, gold on red |
 | `flag_eternal_ankh.png` | The Eternal Ankh | Gold ankh on deep river-red |
+| `flag_descending_dove.png` | The Descending Dove | Gold dove stooping, on imperial purple |
+| `flag_crimson_eagle.png` | The Crimson Eagle | Blood-red displayed eagle on cloth-of-gold |
+| `flag_elder_rune.png` | The Elder Rune | Single gold rune on purple |
+| `flag_ringed_cross.png` | The Ringed Cross | Gold ringed cross w/ four bezants, on red |
 
 - **Registry:** every flag has its entry (name, symbolism, bonuses, flavor) in
   [`/data/flags.json`](../../data/flags.json).

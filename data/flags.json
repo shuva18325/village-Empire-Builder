@@ -1,6 +1,6 @@
 {
   "$schema_note": "Flag registry for Empire Builder. Each entry pairs with a PNG in assets/flags/ (see docs/02-capital-and-flags.md and assets/flags/README.md). The game lists any flag that has BOTH a PNG on disk AND an entry here. These 6 entries are the user-supplied flags (5 historical designs + 1 royal variant), recreated as faithful vector art and rasterized to PNG; drop in your own PNG with the same filename to override any of them. Balance rule: total power budget <= ~10 per flag (1% ~= 1 pt, a 'special' ~= 3-5 pts).",
-  "version": "0.2",
+  "version": "0.3",
   "power_budget_max": 10,
   "flags": [
     {
@@ -10,9 +10,15 @@
       "symbolism": "A crowned double-headed eagle on cloth-of-gold, one head watching East and one West, gripping a sword (temporal power) and a globus cruciger — the cross-bearing orb of sovereignty over the whole world. It proclaims a realm that rules two worlds at once and never sleeps.",
       "flavor": "Flown above a capital that claims to be the center of the world. The twin heads mean no border is ever left unwatched, and no throne is ever left unguarded.",
       "culture_tag": "aggressive",
-      "bonuses": { "culture": 2, "morale": 0, "military": 3, "special": "claim_influence_cost_-5%" },
+      "bonuses": {
+        "culture": 2,
+        "morale": 0,
+        "military": 3,
+        "special": "claim_influence_cost_-5%"
+      },
       "unlock": "always",
-      "variant_of": null
+      "variant_of": null,
+      "dynasty": "House of Palaiologos"
     },
     {
       "id": "labarum",
@@ -21,9 +27,15 @@
       "symbolism": "The sacred monogram (the Chi-Rho) in gold on a field of imperial red, carried at the head of the army. It is the sign of divine favor in war: 'by this sign, conquer.'",
       "flavor": "The standard that turned a warlord into an emperor. Soldiers who march behind the monogram believe the heavens march with them, and they do not break easily.",
       "culture_tag": "devout",
-      "bonuses": { "culture": 1, "morale": 4, "military": 0, "special": "battle_morale_+5%" },
+      "bonuses": {
+        "culture": 1,
+        "morale": 4,
+        "military": 0,
+        "special": "battle_morale_+5%"
+      },
       "unlock": "always",
-      "variant_of": null
+      "variant_of": null,
+      "dynasty": "House of Constantine"
     },
     {
       "id": "holy_cross",
@@ -32,9 +44,15 @@
       "symbolism": "A pure white cross with flared arms on a field of blood-red: martial faith and a sworn order. The red is the sacrifice of those who hold the wall; the white cross is the vow they hold it for.",
       "flavor": "The banner of a holy order sworn to defend the realm's frontier. Where the White Cross flies over a wall, the line has never yet fallen.",
       "culture_tag": "peaceful",
-      "bonuses": { "culture": 0, "morale": 3, "military": 3, "special": "garrison_defense_+5%" },
+      "bonuses": {
+        "culture": 0,
+        "morale": 3,
+        "military": 3,
+        "special": "garrison_defense_+5%"
+      },
       "unlock": "always",
-      "variant_of": null
+      "variant_of": null,
+      "dynasty": "House of Komnenos"
     },
     {
       "id": "vergina_sun",
@@ -43,9 +61,15 @@
       "symbolism": "The radiant sixteen-rayed star of a conquering dynasty, blazing gold on red. It is the sun of a golden age and the emblem of a people whose ambition marched to the edge of the world.",
       "flavor": "Emblazoned on the shields of the phalanx that never lost a pitched battle. A sun that, they swore, would set on no empire of theirs.",
       "culture_tag": "aggressive",
-      "bonuses": { "culture": 2, "morale": 0, "military": 4, "special": "conquest_morale_+5%" },
+      "bonuses": {
+        "culture": 2,
+        "morale": 0,
+        "military": 4,
+        "special": "conquest_morale_+5%"
+      },
       "unlock": "always",
-      "variant_of": null
+      "variant_of": null,
+      "dynasty": "House of Argead"
     },
     {
       "id": "eternal_ankh",
@@ -54,9 +78,83 @@
       "symbolism": "The golden key of life on a deep river-red field: vitality, fertility, and the unbroken cycle of a people who never diminish. It is a promise that the land will never empty.",
       "flavor": "Raised over a civilization that measures its wealth in living souls. Under the Ankh, families flourish and the cradles are never quiet.",
       "culture_tag": "peaceful",
-      "bonuses": { "culture": 2, "morale": 2, "military": 0, "special": "birth_rate_+6%" },
+      "bonuses": {
+        "culture": 2,
+        "morale": 2,
+        "military": 0,
+        "special": "birth_rate_+6%"
+      },
       "unlock": "always",
-      "variant_of": null
+      "variant_of": null,
+      "dynasty": "House of Ptolemy"
+    },
+    {
+      "id": "descending_dove",
+      "name": "The Descending Dove",
+      "png": "assets/flags/flag_descending_dove.png",
+      "symbolism": "A golden dove stooping from on high upon a field of imperial purple — grace and the spirit descending, a mandate granted from above rather than seized from below.",
+      "flavor": "Said to have alighted on the founder's standard at the first dawn. A people who rule because heaven, not the sword, chose them.",
+      "culture_tag": "devout",
+      "bonuses": {
+        "culture": 3,
+        "morale": 4,
+        "military": 0,
+        "special": "festival_potency_+8%"
+      },
+      "unlock": "always",
+      "variant_of": null,
+      "dynasty": "House of Rurik"
+    },
+    {
+      "id": "crimson_eagle",
+      "name": "The Crimson Eagle",
+      "png": "assets/flags/flag_crimson_eagle.png",
+      "symbolism": "A blood-red eagle displayed on cloth-of-gold, wings spread and talons bared — martial vigilance and a warrior aristocracy that watches every horizon.",
+      "flavor": "Carried by the mountain lords who counted their worth in spears. The eagle does not ask leave to hunt.",
+      "culture_tag": "aggressive",
+      "bonuses": {
+        "culture": 0,
+        "morale": 2,
+        "military": 4,
+        "special": "siege_power_+5%"
+      },
+      "unlock": "always",
+      "variant_of": null,
+      "dynasty": "House of Asen"
+    },
+    {
+      "id": "elder_rune",
+      "name": "The Elder Rune",
+      "png": "assets/flags/flag_elder_rune.png",
+      "symbolism": "A single gold rune on purple — the graven word of the ancestors, fate and hard-won wisdom carved into stone that outlasts kings.",
+      "flavor": "No one living recalls who first cut the sign, only that oaths sworn beneath it have never been safely broken.",
+      "culture_tag": "scholarly",
+      "bonuses": {
+        "culture": 3,
+        "morale": 3,
+        "military": 0,
+        "special": "research_+3%"
+      },
+      "unlock": "always",
+      "variant_of": null,
+      "dynasty": "House of Dulo"
+    },
+    {
+      "id": "ringed_cross",
+      "name": "The Ringed Cross",
+      "png": "assets/flags/flag_ringed_cross.png",
+      "symbolism": "A cross of gold ringed in gold, with four bezants for the four corners of the world, on a field of red — one faith binding the whole earth in order and coin.",
+      "flavor": "Struck on the first coins of the realm as much as sewn on its banners. Devotion and treasury, minted together.",
+      "culture_tag": "peaceful",
+      "bonuses": {
+        "culture": 2,
+        "morale": 3,
+        "military": 2,
+        "special": "garrison_defense_+5%"
+      },
+      "unlock": "always",
+      "variant_of": null,
+      "dynasty": "House of Nemanjić"
     },
     {
       "id": "imperial_eagle_royal",
@@ -65,9 +163,32 @@
       "symbolism": "The same gold field and black eagle, now framed in a double border of Tyrian purple — 'born in the purple', the mature, sovereign form of the founding banner, unfurled only when a settlement of soldiers becomes a seat of emperors.",
       "flavor": "Purple was the color no commoner could wear. To ring the golden eagle in it is to declare the realm has passed from ambition into legend.",
       "culture_tag": "aggressive",
-      "bonuses": { "culture": 3, "morale": 2, "military": 3, "special": "claim_influence_cost_-5%" },
+      "bonuses": {
+        "culture": 3,
+        "morale": 2,
+        "military": 3,
+        "special": "claim_influence_cost_-5%"
+      },
       "unlock": "tier:T3",
-      "variant_of": "imperial_eagle"
+      "variant_of": "imperial_eagle",
+      "dynasty": "House of Palaiologos"
+    },
+    {
+      "id": "golden_rho",
+      "name": "The Golden Rho",
+      "dynasty": "House of Lascaris",
+      "png": "assets/flags/flag_golden_rho.png",
+      "symbolism": "A single golden rho on a white field — rule (basileia) distilled to one letter. The quiet confidence of a house that needs no beasts or blades on its banner.",
+      "flavor": "Raised by the scholar-kings who rebuilt an empire from exile; where the Rho flies, the archives are full and the tax rolls are honest.",
+      "culture_tag": "scholarly",
+      "bonuses": {
+        "culture": 3,
+        "morale": 2,
+        "military": 0,
+        "special": "claim_influence_cost_-4%"
+      },
+      "unlock": "always",
+      "variant_of": null
     }
   ]
 }
