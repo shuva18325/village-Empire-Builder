@@ -79,8 +79,8 @@ Phaser) so it runs anywhere and reads the `/data` seeds directly. (Engine choice
 | **P2 — Expansion** ✅ | ~~Explore→claim→colonize→develop→roads~~ **Built** + tribes, raids, tile warfare, T2 flags, Act I victory | Colonization pipeline, roads, fog, combat-lite | done |
 | **P3 — Economy & mining** ✅ | ~~Mines, tool ladder, materials, refining, gear, hazards~~ **Built** + weapon/armor tiers, trade economy, mid-game navy & 162-tile map expansion (Greece/Balkans/Asia Minor/Italy/Iberia) | Resources, mining, gear, storage, naval | done |
 | **P4 — Tech & crafting** ✅ | **Built**: 24-tech tree (8 branches), acts I–III w/ Greece-unification gate, capital T1–T3 incl. Porphyrogennetos, dynastic flags, culture & festivals | Technology, crafting, tiers, flags | done |
-| **P5 — Military & AI** | Recruit/equip/march, combat model, 1 rival AI, diplomacy v1 | Military, combat, AI, diplomacy | 2–3 sessions |
-| **P6 — Volcano & endgame** | Volcanic extraction, adamantine, eruptions, T4–T5, victory | Hazard crescendo, elite tier, win/loss | 2 sessions |
+| **P5 — Military, AI & empires** ✅ | **Built**: 8 expanding rival empires (each a dynasty) with expansion/invasion/siege AI, full diplomacy suite (gift/exchange/trade/NAP/pact/alliance/threaten/war/peace), **stability replaces food**, five map modes (Normal/Political/Population/Resource/Naval), empire economy (tolls/tribute/blockades), acts IV **Mineral Age** & V **Empire Age** → "Master of the Middle Sea" | Military, combat, empire AI, diplomacy, map modes | done |
+| **P6 — Volcano & the 400-tile finale** | Full 400-tile Mediterranean, volcanic extraction, adamantine & advanced minerals, eruptions, distant empires (Kemet/Gaul/Mesopotamia), T4–T5, final victory | Hazard crescendo, elite tier, win/loss | next (`P6_HOOKS` stubbed) |
 | **P7 — Living world** | Disasters, festivals/holidays, religion, culture, migration | Extra Mechanics, polish, balance | 2+ sessions |
 | **P8 — Polish** | Art pass, audio, onboarding, save/load, options | UX, accessibility, tuning | ongoing |
 

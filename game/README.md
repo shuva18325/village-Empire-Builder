@@ -1,9 +1,12 @@
-# Empire Builder — Playable Build (Phases P0–P4)
+# Empire Builder — Playable Build (Phases P0–P5)
 
-**Acts I–III: Hellas.** The game from the GDD, playable in a browser: survive & unite the
-60-tile Peloponnese (Act I), march north and **unify all Greece** (Act II), then research
-Shipwright and sail iron/lapis/obsidian hulls across a **162-tile** Mediterranean (Act III) —
-with a real-geography atlas map, a 24-tech tree, dynastic flags and capital tiers T1–T3.
+**Acts I–V: Hellas & the Middle Sea.** The game from the GDD, playable in a browser: survive
+& unite the 60-tile Peloponnese (Act I), march north and **unify all Greece** (Act II), open
+the sea with iron/lapis/obsidian hulls (Act III), reach the **Mineral Age** (Act IV) and rise
+to the **Empire Age** (Act V) — contending with **8 rival empires** that expand, wage war and
+answer diplomacy across a **162-tile**, real-geography Mediterranean. Five map modes
+(Normal · Political · Population · Resource · Naval), a **stability** economy (food retired),
+a 24-tech tree, dynastic flags and capital tiers T1–T3.
 
 **One-file build:** `node game/build-single.js` → `game/dist/empire-builder-hellas.html`
 (everything inlined; open it anywhere or publish it as an artifact).
@@ -53,10 +56,17 @@ xdg-open game/index.html      # Linux
 | **P4 · Capital tiers T1–T3**: Early → Developed (flag/dynasty choice) → **Grand Capital · Porphyrogennetos** (purple-framed banner, Elite Guard, wonders) | 02 | ✅ |
 | **P4 · Dynastic flags**: 10 banners, each a house — Palaiologos, Constantine, Komnenos, Argead, Ptolemy, Rurik, Asen, Dulo, Nemanjić, Lascaris | 02 | ✅ |
 | **P4 · Culture & festivals**: culture resource, Amphitheater/Archive/Great Hall/Artisan District/Shrine of Kings, Festivals of Heroes · the Forge · the Sea | 12 | ✅ |
+| **P5 · 8 rival empires**: Anatolia, Phoenician Dominion, Italic Empire, Illyrian Despotate, Iberian Hill Kingdoms — each a dynasty holding real homelands, expanding & warring by AI | 15 | ✅ |
+| **P5 · Diplomacy**: gift · cultural exchange · trade pact · non-aggression · defensive pact · alliance · threaten (tribute-or-war) · declare war · sue for peace, driven by opinion (dynasty, culture, strength, border friction, tribute, shared enemies, festivals) | 10 | ✅ |
+| **P5 · Stability economy** (food **retired**): sustenance coverage + stability 0–100 from happiness · housing · culture · festivals · tier · granaries − wars − war exhaustion − tribute pressure; drives births, development, combat morale & rebellion | 05 | ✅ |
+| **P5 · Five map modes**: Normal · **Political** (reference-atlas cyan sea / tan land / empire colour bands + dynasty crests + labelled sea zones) · **Population** (8-step violet→imperial-purple gradient, gold-ringed capitals) · Resource · Naval | 01 | ✅ |
+| **P5 · Empire economy & warfare**: naval tolls, trade income, tribute, blockades, gifts; frontline invasions, naval descents, sieges (×0.55 on strongholds), capital raids, elimination on last tile | 09/15 | ✅ |
+| **P5 · Acts IV–V**: Act III sea → Act IV **Mineral Age** (navy + iron tools) → Act V **Empire Age** (Grand Capital + 3 overseas) → victory **"Master of the Middle Sea"** | 15 | ✅ |
 
-Deliberately deferred (per Phase 4 scope): Empire Stage & the 300–400-tile world, enemy
-empires & expanding AI (P5), advanced minerals (adamantine, lapis steel, magma glass),
-capital T4–T5, advanced holidays (P7).
+Deliberately deferred (Phase 6+ hooks stubbed in `data.js` as `P6_HOOKS`): the **full
+400-tile Mediterranean**, the volcano/adamantine & advanced-mineral system (magma glass,
+deep crystal, lapis steel), the distant empires' homelands (Kemet, Gaul, Mesopotamia),
+capital T4–T5, and advanced holidays.
 
 ## Files
 
@@ -64,17 +74,18 @@ capital T4–T5, advanced holidays (P7).
 game/
 ├── index.html      shell & panels
 ├── style.css       UI theme
-├── data.js         the 60-tile map, buildings, factions, starts, flags, decrees
+├── data.js         the 162-tile map, buildings, factions, starts, flags, empires, diplomacy, acts
 ├── game.js         simulation core (DOM-free — testable headless)
-├── map.js          canvas renderer + picking
-├── ui.js           HUD, panels, modals, main loop
+├── map.js          canvas renderer + picking (5 map modes)
+├── ui.js           HUD, panels, diplomacy, modals, main loop
+├── build-single.js one-file bundler → dist/empire-builder-hellas.html
 └── test-smoke.js   headless test:  node game/test-smoke.js
 ```
 
 ## Testing
 
 ```
-node game/test-smoke.js       # 40+ assertions across every system
+node game/test-smoke.js       # 100 assertions across every system, incl. Phase 5 empires
 ```
 
 Balance constants live at the top of `data.js` (`CONST`) — tune there, per the GDD's

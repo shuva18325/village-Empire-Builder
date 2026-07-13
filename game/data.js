@@ -43,10 +43,10 @@ window.DATA = (function () {
   // out: {res, perWorker} · workers use the named job pool
   const BUILDINGS = {
     house:        { name: 'House',            icon: '🏠', cost: { wood: 20 },            days: 2, dl: 3, popCap: 5,  tip: '+5 population capacity, shelter.' },
-    breeding_hub: { name: 'Breeding Hub',     icon: '👶', cost: { wood: 30, food: 15 },  days: 3, dl: 3, birthMult: 1.15, tip: '+15% birth rate (nursery & family hall). Stacks up to 3.' },
-    farm:         { name: 'Farm',             icon: '🌾', cost: { wood: 20 },            days: 2, dl: 3, job: 'farmer', slots: 3, out: { res: 'food', per: 3.0 }, needs: 'farm',   tip: 'Farmers grow food (season-dependent). Plains/grassland.' },
-    hunters_lodge:{ name: "Hunter's Lodge",   icon: '🏹', cost: { wood: 15 },            days: 1, dl: 2, job: 'hunter', slots: 2, out: { res: 'food', per: 2.2 }, needs: 'hunt',   tip: 'Hunters bring game meat. Forest/hills/mountain.' },
-    granary:      { name: 'Granary',          icon: '🛖', cost: { wood: 25, stone: 15 }, days: 2, dl: 3, foodCap: CONST.GRANARY_CAP, tip: '+120 food storage — vital for winter.' },
+    breeding_hub: { name: 'Breeding Hub',     icon: '👶', cost: { wood: 35 },            days: 3, dl: 3, birthMult: 1.15, tip: '+15% birth rate (nursery & family hall). Stacks up to 3.' },
+    farm:         { name: 'Farm',             icon: '🌾', cost: { wood: 20 },            days: 2, dl: 3, job: 'farmer', slots: 3, out: { res: 'sust', per: 3.0 }, needs: 'farm',   tip: 'Farmers sustain the people (season-dependent) — feeds STABILITY & growth. Plains/grassland.' },
+    hunters_lodge:{ name: "Hunter's Lodge",   icon: '🏹', cost: { wood: 15 },            days: 1, dl: 2, job: 'hunter', slots: 2, out: { res: 'sust', per: 2.2 }, needs: 'hunt',   tip: 'Hunters sustain the people. Forest/hills/mountain.' },
+    granary:      { name: 'Granary',          icon: '🛖', cost: { wood: 25, stone: 15 }, days: 2, dl: 3, stabAdd: 2, winterSust: 8, tip: '+2 stability (reserves) and +8 sustenance through winter.' },
     lumber_camp:  { name: 'Lumber Camp',      icon: '🪓', cost: { wood: 10 },            days: 1, dl: 2, job: 'builder', slots: 2, out: { res: 'wood', per: 2.0 }, needs: 'lumber', tip: 'Builders cut wood. Forest only.' },
     quarry:       { name: 'Quarry',           icon: '⛏️', cost: { wood: 25 },            days: 2, dl: 3, job: 'miner', slots: 2, out: { res: 'stone', per: 1.5 }, needs: 'mine',   tip: 'Miners cut stone. Hills/mountain.' },
     market:       { name: 'Market',           icon: '🏪', cost: { wood: 30, stone: 20 }, days: 3, dl: 4, job: 'builder', slots: 1, out: { res: 'gold', per: 2.0 }, tip: 'Trade income (×1.5 on ports). +0.3 influence/day.' },
@@ -133,7 +133,7 @@ window.DATA = (function () {
   const STARTS = [
     { id: 'sparta',     name: 'Sparta',     seat: [16,13], diff: 2, bias: { metal: 5,  atk: 0.05 },  tip: 'Minerals + military. Fast weapons, slower food.' },
     { id: 'corinth',    name: 'Corinth',    seat: [17,9],  diff: 2, bias: { gold: 30, influence: 5 },tip: 'Trade + naval. Gold-rich, exposed to brigands.' },
-    { id: 'kalamata',   name: 'Kalamata',   seat: [13,14], diff: 1, bias: { food: 60 },              tip: 'Food + growth. A population engine.' },
+    { id: 'kalamata',   name: 'Kalamata',   seat: [13,14], diff: 1, bias: { gold: 25, happy: 2 },    tip: 'Fertile valleys: growth + trade.' },
     { id: 'nafplio',    name: 'Nafplio',    seat: [18,11], diff: 1, bias: { stone: 20, def: 0.05 },  tip: 'Balanced trade + defense.' },
     { id: 'argos',      name: 'Argos',      seat: [17,11], diff: 1, bias: { influence: 10, happy: 3 },tip: 'Culture + farming. Happiness engine.' },
     { id: 'mani',       name: 'Mani',       seat: [15,14], diff: 4, bias: { metal: 10 },             tip: 'Rare ores, little food. The hard road.' },
@@ -177,7 +177,7 @@ window.DATA = (function () {
   // --- decrees (docs/05 §5, slice trio) ----------------------------------------
   const DECREES = {
     families:     { name: 'Encourage Families', icon: '👪', toggle: true, birthMult: 1.3, happy: -2, tip: '+30% births while active, −2 happiness.' },
-    festival:     { name: 'Hold a Festival',    icon: '🎉', cost: { food: 40, gold: 20 }, happyBoost: 12, boostDays: 10, cooldown: 30, tip: '+12 happiness fading over 10 days. 30-day cooldown.' },
+    festival:     { name: 'Hold a Festival',    icon: '🎉', cost: { gold: 40 }, happyBoost: 12, boostDays: 10, cooldown: 30, tip: '+12 happiness fading over 10 days. 30-day cooldown.' },
     conscription: { name: 'Conscription',       icon: '🪖', cost: {}, pop: 5, happy: -5, needsBarracks: true, tip: 'Turn 5 idle folk into militia at once (−5 happiness).' },
   };
 
@@ -302,6 +302,62 @@ window.DATA = (function () {
   // --- Phase 4 capital tiers ----------------------------------------------------
   const TIER_NAMES = { 1: 'Early Capital', 2: 'Developed Capital', 3: 'Grand Capital · Porphyrogennetos' };
 
+  // ===========================================================================
+  // PHASE 5 — EMPIRES, DIPLOMACY, MAP MODES, STABILITY
+  // ===========================================================================
+
+  // The eight empires (docs/15 §8). Five live on this map; three are DISTANT
+  // powers (Kemet, Gaul, Mesopotamia) whose homelands arrive with the full
+  // 400-tile Mediterranean in Phase 6 — they trade, scheme and raid by sea.
+  const EMPIRES = {
+    anatolia:   { name: 'Empire of Anatolia',            col: '#c26b2e', home: ['lydia'],        expandInto: ['lydia', 'ionia'],  personality: 'expansionist', distant: false, navy: 1, strength: 34, flagPref: ['elder_rune', 'crimson_eagle'], tip: 'Heavy infantry and chariot lords, hungry for the Aegean coast.' },
+    phoenicia:  { name: 'Phoenician Coastal Dominion',   col: '#d0342c', home: ['sicily'],       expandInto: ['sicily'],          personality: 'merchant',     distant: false, navy: 3, strength: 24, flagPref: ['ringed_cross', 'eternal_ankh'], tip: 'Masters of the sea lanes — they buy before they burn. Their colonies band the coasts in red.' },
+    italic:     { name: 'Italic Maritime Empire',        col: '#7a4a9e', home: ['magna_graecia'],expandInto: ['magna_graecia', 'sicily'], personality: 'expansionist', distant: false, navy: 2, strength: 30, flagPref: ['crimson_eagle', 'labarum'], tip: 'Disciplined legions and growing fleets across the strait.' },
+    illyria:    { name: 'Illyrian Highland Despotate',   col: '#5a6e8a', home: ['illyria'],      expandInto: ['illyria', 'moesia'], personality: 'raider',     distant: false, navy: 1, strength: 26, flagPref: ['descending_dove', 'holy_cross'], tip: 'Mountain ambushers; iron mastery; they respect only strength.' },
+    iberia:     { name: 'Iberian Hill Kingdoms',         col: '#4a7a3e', home: ['iberia_east'],  expandInto: ['iberia_east'],     personality: 'defensive',    distant: false, navy: 1, strength: 22, flagPref: ['holy_cross', 'descending_dove'], tip: 'Guerrilla hill-clans over silver and shadowed iron.' },
+    kemet:      { name: 'Kingdom of Kemet',              col: '#d4a017', home: [],               expandInto: [],                  personality: 'merchant',     distant: true,  navy: 2, strength: 36, flagPref: ['eternal_ankh'], tip: 'The Nile colossus. Its granaries are bottomless — its homeland arrives with the full Mediterranean (Act VI).' },
+    gaul:       { name: 'Gaulish Grand Kingdom',         col: '#3e8a7a', home: [],               expandInto: [],                  personality: 'expansionist', distant: true,  navy: 0, strength: 32, flagPref: ['vergina_sun'], tip: 'Proud hosts and heavy horse beyond the Alps — beyond the horizon for now.' },
+    mesopotamia:{ name: 'Mesopotamian Imperial Satrapy', col: '#35589e', home: [],               expandInto: [],                  personality: 'defensive',    distant: true,  navy: 1, strength: 38, flagPref: ['golden_rho'], tip: 'The old power of the Twin Rivers; siege-masters. Their satrapies arrive with the full map.' },
+  };
+  const EMPIRE_TILE_GARRISON = 8;      // warriors per empire-held tile
+  const EMPIRE_SEAT_GARRISON = 14;
+
+  // Diplomacy actions (player side) — availability & costs
+  const DIPLO = {
+    gift:      { name: 'Send Gift',          icon: '🎁', cost: { gold: 50 },    opinion: +12, tip: '+12 opinion. Gold speaks every tongue.' },
+    exchange:  { name: 'Cultural Exchange',  icon: '🎭', cost: { culture: 30 }, opinion: +15, tip: '+15 opinion. Poets, plays & marriages.' },
+    trade:     { name: 'Trade Agreement',    icon: '⚖️', minOpinion: 0,   tip: 'Both earn +2 gold/day. Needs opinion ≥ 0.' },
+    nap:       { name: 'Non-Aggression Pact',icon: '🕊️', cost: { gold: 30 }, minOpinion: -10, tip: 'No invasions either way. Needs opinion ≥ −10.' },
+    pact:      { name: 'Defensive Pact',     icon: '🤝', minOpinion: 25, needs: 'nap', tip: 'They join your defense. Needs NAP + opinion ≥ 25.' },
+    alliance:  { name: 'Alliance',           icon: '👑', minOpinion: 45, needs: 'trade', tip: 'Full alliance: shared cause, +3 gold/day. Needs trade + opinion ≥ 45.' },
+    threaten:  { name: 'Demand Tribute',     icon: '🗡️', tip: 'If your armies dwarf theirs they pay 3 gold/day — otherwise it means WAR.' },
+    war:       { name: 'Declare War',        icon: '⚔️', tip: 'Open invasions, sieges & blockades. War exhausts stability.' },
+    peace:     { name: 'Sue for Peace',      icon: '🏳️', tip: 'End the war. If you are losing, expect to pay.' },
+  };
+
+  // --- map modes & the population gradient (8 purples, light → imperial) -------
+  const MAP_MODES = ['normal', 'political', 'population', 'resource', 'naval'];
+  const POP_COLORS = ['#e6d9f2', '#d4bfe8', '#c2a5de', '#a983d1', '#8f62c4', '#7443ae', '#5a2d96', '#3f1a7a'];
+  // political mode palette — matched to the user's reference atlas (cyan sea, tan land)
+  const POLITICAL = { sea: '#8fd8ea', seaDeep: '#6ec4dc', land: '#e9c96b', landEdge: '#8a6a20', neutral: '#e9c96b', player: '#f4c400' };
+
+  // --- Phase 5 acts ------------------------------------------------------------
+  const ACTS = {
+    1: { name: 'Act I — Unite the Peloponnese' },
+    2: { name: 'Act II — Unify Greece' },
+    3: { name: 'Act III — The Naval Age' },
+    4: { name: 'Act IV — The Mineral Age' },
+    5: { name: 'Act V — The Empire Age' },
+    6: { name: 'Act VI — The Full Mediterranean (Phase 6: the 400-tile world)' }, // P6 hook
+  };
+
+  // --- Phase 6 hooks (NOT active): advanced minerals & the 400-tile world ------
+  const P6_HOOKS = {
+    advancedMinerals: ['adamantine', 'magma_glass', 'deep_crystal', 'lapis_steel'],
+    fullMapTiles: 400,
+    volcanoRegions: ['mani', 'sicily'],   // eruption system lands here in P6
+  };
+
   // minor overseas garrison faction (NOT an enemy empire — just tile danger)
   FACTIONS.natives = { name: 'Native Warbands', icon: '⚔️', col: '#6a6a72', campWar: 12, pw: 4.5, raids: false,
     flavor: 'Fierce local warbands. Only a metal-armed host will take these shores.' };
@@ -411,5 +467,7 @@ window.DATA = (function () {
 
   return { CONST, TERRAIN, BUILDINGS, JOBS, TILES, REGIONS, REGION_SPECS, FACTIONS, STARTS, FLAGS, DECREES,
            ORES, INGOTS, TOOLS, GEAR_TIERS, HAZARDS, SHIPS, EXPANSION,
-           TECHS, TECH_BRANCHES, FESTS4, TIER_NAMES };
+           TECHS, TECH_BRANCHES, FESTS4, TIER_NAMES,
+           EMPIRES, DIPLO, MAP_MODES, POP_COLORS, POLITICAL, ACTS, P6_HOOKS,
+           EMPIRE_TILE_GARRISON, EMPIRE_SEAT_GARRISON };
 })();

@@ -61,18 +61,43 @@ window.MapView = (function () {
 
   // a tile is "on the map" (drawn as land) vs "beyond the horizon" (silhouette)
   const visible = t => !t.overseas || Game.overseasReachable(t);
+  const mode = () => (Game.state && Game.state.mapMode) || 'normal';
+  const ownerMeta = o => D.EMPIRES[o] || D.FACTIONS[o] || null;
+  // population density 1..8 for the POPULATION map mode
+  function density(t) {
+    if (!t.explored) return 0;
+    let d = 1;
+    if (t.owner !== 'neutral') d += 1;
+    if (t.settled) d += 2 + Math.floor(t.dl / 12);
+    if (t.seat) d += 1;
+    if (Game.state && t.key === Game.state.capital) d += 2;
+    return Math.max(1, Math.min(8, d));
+  }
+  // sea-zone labels for political & naval modes [text, col, row]
+  const SEA_LABELS = [['AEGEAN SEA', 21.5, 6.5], ['IONIAN SEA', 9.5, 8.5], ['SEA OF CRETE', 19, 15.5],
+    ['ADRIATIC SEA', 7.5, 3.2], ['TYRRHENIAN', 2.5, 9.5]];
 
   function draw() {
     if (!ctx) return;
     const G = Game.state;
     const S = C.TILE;
 
-    // ---- the sea ----
-    const grad = ctx.createLinearGradient(0, 0, cv.width, cv.height);
-    grad.addColorStop(0, '#4a7fa5'); grad.addColorStop(0.5, '#3a6b91');
-    grad.addColorStop(1, '#2c567a');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, cv.width, cv.height);
+    // ---- the sea (palette shifts by map mode) ----
+    const M = mode();
+    if (M === 'political') {
+      ctx.fillStyle = D.POLITICAL.sea;                      // the reference-atlas cyan
+      ctx.fillRect(0, 0, cv.width, cv.height);
+    } else if (M === 'naval') {
+      const g2 = ctx.createLinearGradient(0, 0, cv.width, cv.height);
+      g2.addColorStop(0, '#2e6f9e'); g2.addColorStop(1, '#123a5e');
+      ctx.fillStyle = g2; ctx.fillRect(0, 0, cv.width, cv.height);
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, cv.width, cv.height);
+      grad.addColorStop(0, '#4a7fa5'); grad.addColorStop(0.5, '#3a6b91');
+      grad.addColorStop(1, '#2c567a');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, cv.width, cv.height);
+    }
     ctx.strokeStyle = 'rgba(255,255,255,.045)';
     for (let i = 0; i < 22; i++) {
       ctx.beginPath();
@@ -94,17 +119,36 @@ window.MapView = (function () {
     ctx.fillStyle = 'rgba(150,200,220,.30)';
     vis.forEach(t => ctx.fillRect(px(t) - 4, py(t) - 4, S + 8, S + 8));
 
-    // ---- land fill (region colour, terrain-shaded; fog = unknown dark land) ----
+    // ---- land fill (per map mode; fog = unknown dark land) ----
     vis.forEach(t => {
       const x = px(t), y = py(t);
       if (!t.explored) {
-        ctx.fillStyle = '#2b333f';
+        ctx.fillStyle = M === 'political' ? '#b8a86a' : '#2b333f';
+        ctx.fillRect(x, y, S, S);
+        return;
+      }
+      if (M === 'political') {               // the user's reference atlas: tan land, faction colour bands
+        const em = D.EMPIRES[t.owner];
+        ctx.fillStyle = t.owner === 'player' ? D.POLITICAL.player
+          : em ? em.col
+          : D.FACTIONS[t.owner] ? shade(D.POLITICAL.land, -0.18)
+          : D.POLITICAL.land;
+        ctx.fillRect(x, y, S, S);
+      } else if (M === 'population') {
+        const d = density(t);
+        ctx.fillStyle = D.POP_COLORS[d - 1];
+        ctx.fillRect(x, y, S, S);
+      } else if (M === 'resource') {
+        ctx.fillStyle = shade('#b8b0a0', TERR_SHADE[t.terrain] || 0);
+        ctx.fillRect(x, y, S, S);
+      } else if (M === 'naval') {
+        ctx.fillStyle = t.coastal ? '#c9c2a8' : '#8a8878';
         ctx.fillRect(x, y, S, S);
       } else {
         const base = RCOL[t.region] || '#c0b070';
         ctx.fillStyle = shade(base, TERR_SHADE[t.terrain] || 0);
         ctx.fillRect(x, y, S, S);
-        if (t.owner !== 'player') {          // unowned/enemy: slight wash
+        if (t.owner !== 'player') {
           ctx.fillStyle = 'rgba(20,26,36,.18)';
           ctx.fillRect(x, y, S, S);
         }
@@ -137,8 +181,10 @@ window.MapView = (function () {
       [[1, 0, x + S, y, x + S, y + S], [-1, 0, x, y, x, y + S],
        [0, 1, x, y + S, x + S, y + S], [0, -1, x, y, x + S, y]].forEach(([dc, dr, x1, y1, x2, y2]) => {
         const n = G.tiles[(t.c + dc) + ',' + (t.r + dr)];
-        if (!n || !visible(n)) {              // COAST
-          ctx.strokeStyle = '#233246'; ctx.lineWidth = 2.6;
+        if (!n || !visible(n)) {              // COAST (double stroke: ink + light inner)
+          ctx.strokeStyle = M === 'political' ? '#7a5c14' : '#233246'; ctx.lineWidth = 2.6;
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+          ctx.strokeStyle = 'rgba(255,252,235,.35)'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
         } else if (n.region !== t.region && t.explored && n.explored && (dc === 1 || dr === 1)) {
           ctx.strokeStyle = 'rgba(35,35,30,.55)'; ctx.lineWidth = 1.4;
@@ -147,20 +193,37 @@ window.MapView = (function () {
       });
     });
 
-    // ---- ownership tint borders ----
+    // ---- ownership borders (empires solid, tribes dashed, player gold) ----
     vis.forEach(t => {
       const x = px(t), y = py(t);
       if (!t.explored) return;
+      const em = D.EMPIRES[t.owner];
       if (t.owner === 'player') {
-        ctx.strokeStyle = '#f4c400'; ctx.lineWidth = 2.2;
+        ctx.strokeStyle = '#f4c400'; ctx.lineWidth = M === 'political' ? 2.8 : 2.2;
+        ctx.strokeRect(x + 1.5, y + 1.5, S - 3, S - 3);
+      } else if (em) {
+        ctx.strokeStyle = shade(em.col, -0.35); ctx.lineWidth = M === 'political' ? 2.4 : 2;
         ctx.strokeRect(x + 1.5, y + 1.5, S - 3, S - 3);
       } else if (t.owner !== 'neutral') {
-        ctx.strokeStyle = D.FACTIONS[t.owner].col; ctx.lineWidth = 1.8;
+        ctx.strokeStyle = (D.FACTIONS[t.owner] || {}).col || '#888'; ctx.lineWidth = 1.8;
         ctx.setLineDash([4, 3]);
         ctx.strokeRect(x + 1.5, y + 1.5, S - 3, S - 3);
         ctx.setLineDash([]);
       }
     });
+
+    // ---- capital glow (gold halo; brighter while a grand festival runs) ----
+    const capT = G.tiles[G.capital];
+    if (capT && visible(capT)) {
+      const cx0 = px(capT) + S / 2, cy0 = py(capT) + S / 2;
+      const fest = Object.values(G.fest || {}).some(v => v > 0);
+      const rg = ctx.createRadialGradient(cx0, cy0, 4, cx0, cy0, S * (fest ? 1.5 : 1.05));
+      rg.addColorStop(0, fest ? 'rgba(255,215,64,.5)' : 'rgba(244,196,0,.35)');
+      rg.addColorStop(1, 'rgba(244,196,0,0)');
+      ctx.fillStyle = rg;
+      ctx.fillRect(cx0 - S * 2, cy0 - S * 2, S * 4, S * 4);
+      if (fest) { ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🎉', cx0 + S / 2, cy0 - S / 2); }
+    }
 
     // ---- per-tile icons & marks ----
     ctx.textAlign = 'center';
@@ -175,11 +238,29 @@ window.MapView = (function () {
         }
         return;
       }
-      // terrain glyphs (subtle, atlas-style)
-      ctx.fillStyle = 'rgba(30,30,20,.5)'; ctx.font = '10px sans-serif';
-      if (t.terrain === 'mtn') ctx.fillText('▲', x + S / 2, y + S / 2 + 3);
-      else if (t.terrain === 'hills') ctx.fillText('◠', x + S / 2, y + S / 2 + 3);
-      else if (t.terrain === 'forest') { ctx.fillStyle = 'rgba(0,45,0,.5)'; ctx.fillText('♣', x + S / 2, y + S / 2 + 3); }
+      // terrain glyphs (subtle, atlas-style; hidden on thematic modes)
+      if (M === 'normal' || M === 'resource') {
+        ctx.fillStyle = 'rgba(30,30,20,.5)'; ctx.font = '10px sans-serif';
+        if (t.terrain === 'mtn') ctx.fillText('▲', x + S / 2, y + S / 2 + 3);
+        else if (t.terrain === 'hills') ctx.fillText('◠', x + S / 2, y + S / 2 + 3);
+        else if (t.terrain === 'forest') { ctx.fillStyle = 'rgba(0,45,0,.5)'; ctx.fillText('♣', x + S / 2, y + S / 2 + 3); }
+      }
+      // empire garrisons & their capital crests
+      const em2 = D.EMPIRES[t.owner];
+      if (em2) {
+        if (t.seat) {
+          const E2 = G.empires[t.owner];
+          const im2 = E2 && flagImgs[E2.flag];
+          if (im2 && im2.complete && im2.naturalWidth) {
+            ctx.drawImage(im2, x + S - 16, y + 2, 14, 9);
+            ctx.strokeStyle = '#222'; ctx.lineWidth = 1; ctx.strokeRect(x + S - 16, y + 2, 14, 9);
+          }
+          ctx.font = '12px sans-serif'; ctx.fillText('👑', x + 8, y + 12);
+        } else if (M !== 'population') {
+          ctx.font = '9px sans-serif'; ctx.fillStyle = shade(em2.col, -0.45);
+          ctx.fillText('⚔', x + S - 8, y + 12);
+        }
+      }
       // settlement / camp icons on top
       ctx.font = '13px sans-serif';
       if (t.key === G.capital) { ctx.font = '16px sans-serif'; ctx.fillText('🏛️', x + S / 2, y + S / 2 + 4); }
@@ -193,14 +274,27 @@ window.MapView = (function () {
       if (t.port) { ctx.fillStyle = '#1a3a5a'; ctx.fillText('⚓', x + 7, y + S - 4); }
       if (t.owner !== 'player' && t.danger >= 3) { ctx.fillStyle = '#7a1a10'; ctx.fillText('☠', x + S - 7, y + 10); }
       if (t.volcanic || (t.hazards && t.hazards.length)) { ctx.font = '10px sans-serif'; ctx.fillText('🌋', x + S / 2 - 8, y + 11); }
-      // ore dots
-      if (t.ores && t.ores.length) {
+      // ore dots (bold on the RESOURCE map)
+      if (t.ores && t.ores.length && M !== 'population' && M !== 'political') {
+        const big = M === 'resource';
         t.ores.forEach((o, i) => {
           const od = D.ORES[o]; if (!od) return;
           ctx.fillStyle = od.dot;
-          ctx.beginPath(); ctx.arc(x + S - 7 - i * 7, y + S - 7, 2.8, 0, 7); ctx.fill();
-          ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = .7; ctx.stroke();
+          ctx.beginPath(); ctx.arc(x + S - (big ? 9 : 7) - i * (big ? 10 : 7), y + S - (big ? 9 : 7), big ? 4.5 : 2.8, 0, 7); ctx.fill();
+          ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = big ? 1.2 : .7; ctx.stroke();
         });
+      }
+      // population mode: capitals ring in gold, density number
+      if (M === 'population' && t.explored) {
+        if (t.key === G.capital || (t.seat && D.EMPIRES[t.owner])) {
+          ctx.strokeStyle = '#f4c400'; ctx.lineWidth = 2.6;
+          ctx.strokeRect(x + 1.5, y + 1.5, S - 3, S - 3);
+        }
+      }
+      // naval mode: ports glow
+      if (M === 'naval' && t.port && t.explored) {
+        ctx.strokeStyle = t.owner === 'player' ? '#ffe066' : '#9ad1ff'; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.arc(x + S / 2, y + S / 2, S * 0.42, 0, 7); ctx.stroke();
       }
       // building pips
       if (t.owner === 'player' && t.buildings.length > 1) {
@@ -249,6 +343,17 @@ window.MapView = (function () {
       ctx.fillStyle = 'rgba(30,25,15,.95)';
       ctx.fillText(label, lx, ly);
     });
+
+    // ---- sea-zone labels (political & naval modes) ----
+    if (M === 'political' || M === 'naval') {
+      ctx.font = 'italic 700 10px Georgia, serif';
+      ctx.textAlign = 'center';
+      SEA_LABELS.forEach(([txt, c, r]) => {
+        const lx = 10 + c * S, ly = 10 + r * S;
+        ctx.fillStyle = M === 'political' ? 'rgba(20,60,80,.65)' : 'rgba(200,230,255,.55)';
+        ctx.fillText(txt, lx, ly);
+      });
+    }
 
     // ---- hover & selection ----
     const hov = G.tiles[hoverKey];

@@ -62,7 +62,7 @@ window.Game = (function () {
       capitalName: null, tier: 1, flag: null,
       pop: 10, jobs: { farmer: 2, hunter: 3, builder: 3, miner: 0, soldier: 0 },
       soldiersArmed: 0,                // soldiers equipped with metal (power 5 vs 3)
-      res: { food: 60, wood: 40, stone: 10, metal: 0, gold: 0 },
+      res: { wood: 40, stone: 10, metal: 0, gold: 10 },
       influence: 15,
       statuses: {},                    // id -> daysLeft
       decrees: { families: false, festivalCd: 0, festivalBoost: 0 },
@@ -75,7 +75,7 @@ window.Game = (function () {
     };
     // apply start bias
     const b = start.bias || {};
-    ['food', 'wood', 'stone', 'metal', 'gold'].forEach(r => { if (b[r]) G.res[r] += b[r]; });
+    ['wood', 'stone', 'metal', 'gold'].forEach(r => { if (b[r]) G.res[r] += b[r]; });
     if (b.influence) G.influence += b.influence;
     G.bias = { atk: b.atk || 0, def: b.def || 0, happy: b.happy || 0 };
 
@@ -96,6 +96,33 @@ window.Game = (function () {
     G.fest = { heroes: 0, forge: 0, sea: 0 };            // active festival day counters
     G.festCd = {};                                       // festival cooldowns
 
+    // --- Phase 5 state: empires, diplomacy, stability ---
+    G._sust = 0;                                          // sustenance produced today
+    G.warExh = 0;                                         // war exhaustion (decays)
+    G.pendingDiplo = null;                                // one envoy at a time
+    G.mapMode = 'normal';
+    G.empires = {};
+    const takenFlags = new Set();
+    Object.entries(D.EMPIRES).forEach(([id, meta]) => {
+      const flag = meta.flagPref.find(f => !takenFlags.has(f)) || meta.flagPref[0];
+      takenFlags.add(flag);
+      G.empires[id] = {
+        id, flag, strength: meta.strength, navy: meta.navy, gold: 60,
+        opinion: meta.personality === 'merchant' ? 10 : meta.personality === 'raider' ? -15 : meta.personality === 'expansionist' ? -5 : 0,
+        status: 'peace', trade: false, nap: false, pact: false, alliance: false,
+        tributesPlayer: false, playerTributes: false, eliminated: false,
+        timers: { expand: 10 + Math.floor(Math.random() * 8), diplo: 20 + Math.floor(Math.random() * 15), invade: 12 },
+      };
+      // seat their homelands on the map
+      meta.home.forEach(rg => Object.values(G.tiles).forEach(t => {
+        if (t.region === rg && (t.owner === 'neutral' || t.owner === 'natives')) {
+          t.owner = id; t.camp = false;
+          t.warriors = t.seat ? D.EMPIRE_SEAT_GARRISON : D.EMPIRE_TILE_GARRISON;
+          if (t.seat) { t.settled = true; t.dl = Math.max(t.dl, 18); }
+        }
+      }));
+    });
+
     // capital tile: liberate its faction (you ARE these people), settle it
     const cap = T(G.capital);
     const fac = cap.owner !== 'neutral' ? cap.owner : null;
@@ -112,7 +139,7 @@ window.Game = (function () {
       if (D.FACTIONS[f].raids) G.raidTimers[f] = ri(...D.FACTIONS[f].raidEvery);
     });
     log(`The Chiefdom of the Morea is founded at ${G.capitalName}. Survive, grow, unite the Peloponnese.`, 'good');
-    log(`🍖 Your stores won't last: build a Hunter's Lodge or Farm on the capital before the food runs out!`, '');
+    log(`🌾 Build a Hunter's Lodge or Farm quickly — an unsustained people loses STABILITY and dwindles.`, '');
     emit('all');
     return G;
   }
@@ -127,15 +154,6 @@ window.Game = (function () {
       t.buildings.forEach(b => c += D.BUILDINGS[b].popCap || 0);
       cap += c;
     });
-    return cap;
-  }
-  function foodCap() {
-    let cap = C.FOOD_CAP_BASE;
-    const granaryBonus = hasTech('agri2') ? 60 : 0;
-    ownedTiles().forEach(t => t.buildings.forEach(b => {
-      cap += D.BUILDINGS[b].foodCap || 0;
-      if (b === 'granary') cap += granaryBonus;
-    }));
     return cap;
   }
   function soldierCap() {
@@ -247,6 +265,32 @@ window.Game = (function () {
     return '—';
   }
 
+  // ---------- Phase 5: sustenance & STABILITY (food system replaced) ----------
+  const sustenance = () => G._sust || 0;
+  function coverage() {                     // how well the people are sustained (1.0 = fully)
+    const need = Math.max(1, Math.floor(G.pop) * 1.0 + G.jobs.soldier * 0.15);
+    return clamp((G._sust || 0) / need, 0, 2);
+  }
+  function tributePressure() {
+    return Object.values(G.empires || {}).filter(E => E.playerTributes && !E.eliminated).length * 5;
+  }
+  function warsActive() {
+    return Object.values(G.empires || {}).filter(E => E.status === 'war' && !E.eliminated).length;
+  }
+  function stability() {
+    const h = happiness();
+    let st = 18 + h * 0.45
+      + clamp((popCap() - G.pop) / Math.max(1, G.pop) * 15, -10, 8)      // housing
+      + Math.min(12, culturePerDay() * 4)                                 // culture
+      + (G.decrees.festivalBoost > 0 ? 4 : 0)
+      + (Object.values(G.fest).some(v => v > 0) ? 5 : 0)                  // grand festivals
+      + (G.flag ? 3 : 0) + (G.tier - 1) * 4                               // dynasty + capital tier
+      + Math.min(8, countB('granary') * (D.BUILDINGS.granary.stabAdd || 0))
+      - warsActive() * 4 - (G.warExh || 0) - tributePressure();
+    return clamp(Math.round(st), 0, 100);
+  }
+  const moraleMult = () => 0.85 + stability() / 100 * 0.25;
+
   // food source variety (forage + hunt + farm active; husbandry adds herds)
   function foodSources() {
     let n = 0;
@@ -259,7 +303,7 @@ window.Game = (function () {
 
   function happiness() {
     const cap = popCap();
-    const buffer = G.res.food / Math.max(1, dailyFood());
+    const cov = coverage();
     let h = 50;
     h += Math.min(12, foodSources() * 4);                          // variety
     h += clamp((cap - G.pop) / Math.max(1, G.pop) * 20, 0, 10);    // shelter
@@ -276,22 +320,18 @@ window.Game = (function () {
     if (G.statuses.fearful) h -= 8;
     if (G.statuses.overworked) h -= 8;
     h -= clamp((G.pop - cap) * 1.5, 0, 15);                        // overcrowding
-    if (buffer < 2) h -= 15; else if (buffer < 5) h -= 7;          // hunger fear
+    if (cov < 0.7) h -= 15; else if (cov < 0.9) h -= 7;            // the people go wanting
     return clamp(Math.round(h), 0, 100);
   }
   const prodMult = () => 0.6 + happiness() / 100 * 0.8;
 
-  function dailyFood() {
-    return Math.floor(G.pop) * C.FOOD_PER_POP * (season() === 'Winter' ? 1.05 : 1)
-      + G.jobs.soldier * C.SOLDIER_FOOD;
-  }
 
   // building production for one day
   function produce() {
     const pm = prodMult(), conn = roadConnected();
     const pools = { farmer: G.jobs.farmer, hunter: G.jobs.hunter, builder: G.jobs.builder, miner: G.jobs.miner };
-    const gains = { food: 0, wood: 0, stone: 0, gold: 0 };
-    gains.food += idle() * 0.2 * (season() === 'Winter' ? 0.5 : 1);
+    const gains = { sust: 0, wood: 0, stone: 0, gold: 0 };
+    gains.sust += idle() * 0.2 * (season() === 'Winter' ? 0.5 : 1);   // foragers
     G._mineBlocked = false;                              // UI hint: tool too weak somewhere
 
     ownedTiles().forEach(t => {
@@ -328,8 +368,9 @@ window.Game = (function () {
         gains[b.out.res] += take * b.out.per * mult;
       });
     });
-    gains.food += (pools.hunter || 0) * 1.2 * C.SEASON_HUNT[season()] * pm;
-    gains.food += (pools.farmer || 0) * 0.3;
+    gains.sust += (pools.hunter || 0) * 1.2 * C.SEASON_HUNT[season()] * pm;   // wild hunting
+    gains.sust += (pools.farmer || 0) * 0.3;                                   // gleaning
+    if (season() === 'Winter') gains.sust += countB('granary') * (D.BUILDINGS.granary.winterSust || 0);
 
     // ---- REFINING: Ore → Ingot (Smelter/Bloomery/Kiln) & alloy (Crucible) ----
     const refineRate = C.REFINE_RATE * (0.7 + pm * 0.3) * (G.fest.forge > 0 ? 1.25 : 1);
@@ -356,11 +397,29 @@ window.Game = (function () {
     gains.gold += ownedTiles().filter(t => t.port && t.settled).length * 0.4
       * (hasTech('trade3') ? 1.3 : 1) * tradeMult;
 
-    if (happiness() >= 55) ownedTiles().forEach(t => {
+    // ---- Phase 5 empire economy: tribute, treaties, naval tolls, blockades ----
+    let extGold = 0, blockaded = false;
+    Object.values(G.empires).forEach(E => {
+      if (E.eliminated) return;
+      if (E.tributesPlayer) extGold += 3;
+      if (E.trade) extGold += 2;
+      if (E.alliance) extGold += 1;
+      if (E.status === 'war' && E.navy > G.navalTier + Object.keys(G.ships).length * 0) blockaded = blockaded || E.navy > G.navalTier;
+    });
+    const ports = ownedTiles().filter(t => t.port && t.settled).length;
+    const shipsTotal = Object.values(G.ships).reduce((a, b) => a + b, 0);
+    if (!blockaded && G.navalTier >= 1) extGold += Math.min(ports, shipsTotal) * 0.6;   // naval tolls
+    if (blockaded) {
+      extGold -= ports * 0.2;
+      if (!G._blockWarned) { log('⛵ BLOCKADE — an enemy fleet chokes your ports! Trade gold suffers.', 'bad'); G._blockWarned = true; }
+    } else G._blockWarned = false;
+    gains.gold += extGold - Object.values(G.empires).filter(E => E.playerTributes && !E.eliminated).length * 3; // tribute you pay
+
+    if (stability() >= 55) ownedTiles().forEach(t => {
       if (t.settled) t.dl = Math.min(100, t.dl + (conn.has(t.key) ? 0.2 : 0.1));
     });
-    G.res.food = Math.min(foodCap(), G.res.food + gains.food);
-    G.res.wood += gains.wood; G.res.stone += gains.stone; G.res.gold += gains.gold;
+    G._sust = gains.sust;
+    G.res.wood += gains.wood; G.res.stone += gains.stone; G.res.gold = Math.max(0, G.res.gold + gains.gold);
     let infl = C.INFLUENCE_BASE + countB('market') * 0.3;
     ownedTiles().forEach(t => t.buildings.forEach(b => infl += D.BUILDINGS[b].influence || 0));
     G.influence += infl;
@@ -409,30 +468,35 @@ window.Game = (function () {
 
   // population growth/decline
   function popTick() {
-    const h = happiness();
-    const buffer = G.res.food / Math.max(1, dailyFood());
-    const foodFactor = clamp(buffer / 5, 0, 1.5);
+    const h = happiness(), st = stability(), cov = coverage();
+    const sustFactor = clamp(cov, 0, 1.3);
     const housing = clamp((popCap() - G.pop) / Math.max(1, G.pop * 0.2), 0, 1.2);
     let policy = G.decrees.families ? D.DECREES.families.birthMult : 1;
     policy *= Math.pow(D.BUILDINGS.breeding_hub.birthMult, Math.min(3, countB('breeding_hub')));
     policy *= 1 + flagBonus('birth');
-    const births = Math.floor(G.pop) * C.BASE_BIRTH * foodFactor * housing
-      * (0.4 + h / 100) * policy * C.SEASON_BIRTH[season()];
-    const starving = G.res.food <= 0 ? 1 : 0;
-    const deaths = Math.floor(G.pop) * C.BASE_DEATH * (1 + starving * 3);
+    const births = Math.floor(G.pop) * C.BASE_BIRTH * sustFactor * housing
+      * (0.5 + st / 100 * 0.8) * policy * C.SEASON_BIRTH[season()];
+    const wanting = cov < 0.5 ? 1 : 0;
+    const deaths = Math.floor(G.pop) * C.BASE_DEATH * (1 + wanting * 3);
     G.pop = Math.max(0, G.pop + births - deaths);
-    // consumption
-    G.res.food = Math.max(0, G.res.food - dailyFood());
-    if (starving) {
-      if (!G._starveWarned) { log('⚠ FAMINE — your people are starving!', 'bad'); G._starveWarned = true; }
-      // starvation can shed workers
+    if (wanting) {
+      if (!G._starveWarned) { log('⚠ WANT — the land cannot sustain your people! Build farms & lodges.', 'bad'); G._starveWarned = true; }
       if (Math.random() < 0.3 && G.pop > 0) shedWorker();
     } else G._starveWarned = false;
-    // clamp jobs to pop
     while (assigned() > Math.floor(G.pop)) shedWorker();
-    // statuses driven by state
-    if (buffer >= 8 && foodSources() >= 3) setStatus('wellfed', 2);
-    if (h >= 75 && buffer >= 5) setStatus('prosperous', 2);
+    if (cov >= 1.15 && foodSources() >= 3) setStatus('wellfed', 2);
+    if (h >= 75 && cov >= 1) setStatus('prosperous', 2);
+    // Phase 5: unrest & rebellion at rock-bottom stability
+    if (st < 25 && Math.random() < 0.02) {
+      const towns = ownedTiles().filter(t => t.settled && t.key !== G.capital);
+      if (towns.length) {
+        const t = towns[ri(0, towns.length - 1)];
+        t.dl = Math.max(0, t.dl - 5); G.pop = Math.max(0, G.pop - 2);
+        setStatus('fearful', 4);
+        log(`🔥 UNREST in ${tileName(t)} — stability ${st}% breeds rebellion!`, 'bad');
+      }
+    }
+    if ((G.warExh || 0) > 0) G.warExh = Math.max(0, G.warExh - 0.1);
     if (G.pop <= 0 && !G.over) { G.over = true; emit('defeat'); }
   }
   function shedWorker() {
@@ -520,11 +584,11 @@ window.Game = (function () {
         log(`🛡️ ${D.FACTIONS[f].name} raided ${tileName(target)} — repelled by your garrison!`, 'good');
         setStatus('heroic', 3);
       } else {
-        const foodLoss = Math.floor(G.res.food * 0.2), popLoss = ri(0, 2);
-        G.res.food -= foodLoss; G.pop = Math.max(0, G.pop - popLoss);
+        const goldLoss = Math.floor(G.res.gold * 0.25), woodLoss = Math.floor(G.res.wood * 0.15), popLoss = ri(0, 2);
+        G.res.gold -= goldLoss; G.res.wood -= woodLoss; G.pop = Math.max(0, G.pop - popLoss);
         G.stats.raidsSuffered++;
         setStatus('fearful', 4);
-        log(`🔥 ${D.FACTIONS[f].name} raided ${tileName(target)}! Lost ${foodLoss} food${popLoss ? `, ${popLoss} people` : ''}.`, 'bad');
+        log(`🔥 ${D.FACTIONS[f].name} raided ${tileName(target)}! Lost ${goldLoss} gold, ${woodLoss} wood${popLoss ? `, ${popLoss} people` : ''}.`, 'bad');
       }
       emit('all');
     });
@@ -576,12 +640,12 @@ window.Game = (function () {
   function canColonize(t) {
     return isMine(t) && !t.settled && !G.over &&
       Math.floor(G.pop) - assigned() >= 0 && G.pop >= C.COLONIZE_POP + 4 &&
-      G.res.wood >= C.COLONIZE_WOOD && G.res.food >= C.COLONIZE_FOOD;
+      G.res.wood >= C.COLONIZE_WOOD;
   }
   function colonize(key) {
     const t = T(key);
     if (!canColonize(t)) return false;
-    G.pop -= C.COLONIZE_POP; G.res.wood -= C.COLONIZE_WOOD; G.res.food -= C.COLONIZE_FOOD;
+    G.pop -= C.COLONIZE_POP; G.res.wood -= C.COLONIZE_WOOD;
     while (assigned() > Math.floor(G.pop)) shedWorker();
     t.settled = true; t.buildings.push('village_center');
     t.dl = Math.min(100, t.dl + D.BUILDINGS.village_center.dl);
@@ -633,11 +697,11 @@ window.Game = (function () {
 
   function canRecruit() {
     return !G.over && countB('barracks') > 0 && G.jobs.soldier < soldierCap() &&
-      idle() >= 1 && G.res.food >= 20 && G.res.wood >= 5;
+      idle() >= 1 && G.res.gold >= 3 && G.res.wood >= 10;
   }
   function recruit() {
     if (!canRecruit()) return false;
-    G.res.food -= 20; G.res.wood -= 5;
+    G.res.gold -= 3; G.res.wood -= 10;
     G.army.militia++; syncSoldiers();
     log('🪖 Recruited a militiaman — equip them with metal at the Forge.');
     emit('all'); return true;
@@ -717,13 +781,16 @@ window.Game = (function () {
     const t = T(key);
     count = clamp(count || G.jobs.soldier, 1, G.jobs.soldier);
     if (!canAttack(t)) return false;
+    const emp = G.empires[t.owner];                       // Phase 5: empire tiles
+    if (emp && emp.status !== 'war') declareWarInternal(t.owner, 'Your assault on ' + tileName(t));
     const fs = forceStats(count);
-    let atk = (fs.atk + fs.morale) * rnd(0.9, 1.1);
+    let atk = (fs.atk + fs.morale) * rnd(0.9, 1.1) * moraleMult();
     atk *= 1 + flagBonus('atk') + G.bias.atk + (G.statuses.heroic ? 0.10 : 0)
       + (hasTech('war1') ? 0.05 : 0)                       // Drill
       + (G.fest.heroes > 0 ? 0.10 : 0)                     // Festival of Heroes
       + (G.tier >= 3 && hasTech('war3') ? 0.05 : 0);       // Elite Guard vanguard
-    let def = t.warriors * D.FACTIONS[t.owner].pw * D.TERRAIN[t.terrain].def * rnd(0.9, 1.1);
+    const defPw = emp ? (3 + emp.strength / 12) : D.FACTIONS[t.owner].pw;
+    let def = t.warriors * defPw * D.TERRAIN[t.terrain].def * rnd(0.9, 1.1);
     if (t.fortress) def *= 1.5;
     // siege ability cuts fortress / mountain defense (Siegecraft bites harder)
     const siegePer = hasTech('war2') ? 0.03 : 0.02;
@@ -739,8 +806,13 @@ window.Game = (function () {
       G.stats.battlesWon++; G.stats.tilesTaken++;
       setStatus('heroic', 5);
       log(`🎖️ Victory at ${tileName(t)}! ${wasCamp ? 'The camp is razed. ' : ''}Losses: ${losses}.`, 'good');
-      // faction collapse: no camps left -> their tiles go neutral
-      if (!Object.values(G.tiles).some(x => x.owner === fac && x.camp)) {
+      if (emp) {                                          // struck an empire
+        emp.strength = Math.max(4, emp.strength - 5);
+        if (!Object.values(G.tiles).some(x => x.owner === fac)) {
+          emp.eliminated = true; emp.status = 'peace';
+          log(`🏛️ THE ${D.EMPIRES[fac].name.toUpperCase()} HAS FALLEN — its last city is yours!`, 'gold');
+        }
+      } else if (!Object.values(G.tiles).some(x => x.owner === fac && x.camp)) {
         Object.values(G.tiles).forEach(x => { if (x.owner === fac) { x.owner = 'neutral'; x.warriors = 0; } });
         delete G.raidTimers[fac];
         log(`🏳️ The ${D.FACTIONS[fac].name} submit! Their lands lie open to your claim.`, 'good');
@@ -748,6 +820,7 @@ window.Game = (function () {
       checkTier(); checkVictory();
     } else {
       G.stats.battlesLost++;
+      G.warExh = Math.min(20, (G.warExh || 0) + 2);
       setStatus('fearful', 4);
       log(`💀 Defeat at ${tileName(t)}. ${losses} soldiers fell; the rest fled home.`, 'bad');
     }
@@ -770,12 +843,180 @@ window.Game = (function () {
     checkTier(); checkVictory(); emit('all'); return true;
   }
 
+  // ==================== PHASE 5: EMPIRES & DIPLOMACY ====================
+  const playerPower = () => forceStats(G.jobs.soldier).atk + Object.values(G.ships).reduce((a, b) => a + b, 0) * 5;
+  const empireTiles = id => Object.values(G.tiles).filter(t => t.owner === id);
+  const empireExplored = id => empireTiles(id).some(t => t.explored);
+
+  function declareWarInternal(id, why) {
+    const E = G.empires[id]; if (!E || E.status === 'war') return;
+    E.status = 'war'; E.trade = false; E.nap = false; E.pact = false; E.alliance = false;
+    E.tributesPlayer = false; E.playerTributes = false;
+    E.opinion = Math.min(E.opinion, -40);
+    E.timers.invade = ri(8, 14);
+    G.warExh = Math.min(20, (G.warExh || 0) + 2);
+    log(`⚔️ WAR with the ${D.EMPIRES[id].name}! (${why})`, 'bad');
+    emit('all');
+  }
+
+  function empiresTick() {
+    Object.entries(G.empires).forEach(([id, E]) => {
+      if (E.eliminated) return;
+      const meta = D.EMPIRES[id];
+      E.strength += 0.06 + (E.gold > 120 ? 0.04 : 0);      // recruit armies
+      E.gold += 1 + (E.trade ? 2 : 0);
+      // grow their cities
+      if (!meta.distant && G.day % 6 === 0) empireTiles(id).forEach(t => {
+        t.dl = Math.min(60, t.dl + 0.4);
+        if (t.dl >= 15 && !t.settled) t.settled = true;    // a new city rises
+      });
+      if (!meta.distant && --E.timers.expand <= 0) { E.timers.expand = ri(9, 16); empireExpand(id, E, meta); }
+      if (--E.timers.diplo <= 0) { E.timers.diplo = ri(16, 26) * (G.act >= 5 ? 0.6 : 1); empireDiplomacy(id, E, meta); }
+      if (E.status === 'war' && --E.timers.invade <= 0) { E.timers.invade = ri(10, 18); empireInvade(id, E, meta); }
+      // opinion drift
+      let drift = -Math.sign(E.opinion) * 0.02;
+      const friction = ownedTiles().filter(t => neighbors(t.key).some(n => n.owner === id)).length;
+      drift -= friction * 0.03;
+      if (E.trade) drift += 0.05;
+      if (E.alliance) drift += 0.06;
+      if (E.tributesPlayer) drift -= 0.02;
+      if (Object.values(G.fest).some(v => v > 0)) drift += 0.02;   // festivals impress envoys
+      E.opinion = clamp(E.opinion + drift, -100, 100);
+    });
+  }
+
+  function empireExpand(id, E, meta) {
+    const cands = [];
+    empireTiles(id).forEach(t => neighbors(t.key).forEach(n => {
+      if (meta.expandInto.includes(n.region) &&
+        (n.owner === 'neutral' || (n.owner === 'natives' && Math.random() < 0.6))) cands.push(n);
+    }));
+    if (!cands.length) return;
+    const t = cands[ri(0, cands.length - 1)];
+    t.owner = id; t.camp = false;
+    t.warriors = t.seat ? D.EMPIRE_SEAT_GARRISON : D.EMPIRE_TILE_GARRISON;
+    if (empireExplored(id)) log(`🏛️ The ${meta.name} claims ${tileName(t)}.`, '');
+    emit('tile');
+  }
+
+  function empireDiplomacy(id, E, meta) {
+    if (G.pendingDiplo || E.status === 'war') {
+      // wars: consider suing for peace when battered
+      if (E.status === 'war' && E.strength < meta.strength * 0.6 && !G.pendingDiplo)
+        G.pendingDiplo = { kind: 'offer_peace', empire: id };
+      if (G.pendingDiplo) emit('diplo');
+      return;
+    }
+    const pp = playerPower();
+    if (E.opinion < -25 && E.strength > pp * 1.2 && !E.tributesPlayer && !E.nap) {
+      G.pendingDiplo = { kind: 'demand', empire: id, gold: 60 };
+      emit('diplo');
+    } else if (meta.personality === 'merchant' && !E.trade && E.opinion >= 0) {
+      G.pendingDiplo = { kind: 'offer_trade', empire: id };
+      emit('diplo');
+    } else if (E.opinion > 30 && Math.random() < 0.3) {
+      G.res.gold += 15;
+      log(`🎁 The ${meta.name} sends gifts — the ${G.flag ? G.flag.dynasty : 'League'} is honored (+15 gold).`, 'good');
+    }
+  }
+
+  function empireInvade(id, E, meta) {
+    // frontline first: player tiles bordering the empire; else naval descent on a port
+    let targets = ownedTiles().filter(t => neighbors(t.key).some(n => n.owner === id));
+    if (!targets.length && E.navy >= 2) targets = ownedTiles().filter(t => t.port && t.settled);
+    if (!targets.length) return;
+    const t = targets[ri(0, targets.length - 1)];
+    const isStronghold = t.seat || t.fortress || t.buildings.includes('walls') || t.key === G.capital;
+    let atkPw = E.strength * rnd(0.8, 1.2);
+    let defPw = (forceStats(G.jobs.soldier).def * 0.85 + 4) * moraleMult();
+    defPw *= (1 + flagBonus('def') + G.bias.def + (G.tier >= 3 && hasTech('war3') ? 0.10 : 0));
+    if (t.buildings.includes('palisade')) defPw *= D.BUILDINGS.palisade.defMult;
+    if (isStronghold) atkPw *= 0.55;                       // sieges are hard
+    if (defPw >= atkPw) {
+      E.strength = Math.max(4, E.strength - 4);
+      setStatus('heroic', 4);
+      log(`🛡️ ${meta.name} ${isStronghold ? 'siege of' : 'invasion at'} ${tileName(t)} REPELLED!`, 'good');
+    } else if (t.key === G.capital) {
+      G.pop = Math.max(0, G.pop - Math.ceil(G.pop * 0.08));
+      G.warExh = Math.min(20, G.warExh + 4);
+      setStatus('fearful', 6);
+      log(`🔥 The ${meta.name} storms the walls of ${G.capitalName}! The city holds, at terrible cost.`, 'bad');
+    } else {
+      t.owner = id; t.warriors = D.EMPIRE_TILE_GARRISON; t.road = false;
+      killSoldiers(Math.min(G.jobs.soldier, 2));
+      G.warExh = Math.min(20, G.warExh + 3);
+      setStatus('fearful', 5);
+      log(`🔥 INVASION — the ${meta.name} seizes ${tileName(t)}! Retake it, or the frontline crumbles.`, 'bad');
+    }
+    emit('all');
+  }
+
+  // ---- player diplomacy ----
+  function canDiplo(id, action) {
+    const E = G.empires[id]; if (!E || E.eliminated || G.over) return false;
+    const a = D.DIPLO[action];
+    switch (action) {
+      case 'gift': return G.res.gold >= a.cost.gold && E.status !== 'war';
+      case 'exchange': return G.culture >= a.cost.culture && E.status !== 'war';
+      case 'trade': return !E.trade && E.status !== 'war' && E.opinion >= a.minOpinion;
+      case 'nap': return !E.nap && E.status !== 'war' && E.opinion >= a.minOpinion && G.res.gold >= a.cost.gold;
+      case 'pact': return !E.pact && E.nap && E.status !== 'war' && E.opinion >= a.minOpinion;
+      case 'alliance': return !E.alliance && E.trade && E.status !== 'war' && E.opinion >= a.minOpinion;
+      case 'threaten': return E.status !== 'war' && !E.tributesPlayer;
+      case 'war': return E.status !== 'war';
+      case 'peace': return E.status === 'war' && G.res.gold >= 80;
+      default: return false;
+    }
+  }
+  function diploAction(id, action) {
+    if (!canDiplo(id, action)) return false;
+    const E = G.empires[id], meta = D.EMPIRES[id], a = D.DIPLO[action];
+    if (action === 'gift') { G.res.gold -= a.cost.gold; E.opinion = clamp(E.opinion + a.opinion, -100, 100); log(`🎁 Gifts sent to the ${meta.name} (+${a.opinion} opinion).`, 'good'); }
+    else if (action === 'exchange') { G.culture -= a.cost.culture; E.opinion = clamp(E.opinion + a.opinion, -100, 100); log(`🎭 Poets & envoys exchanged with the ${meta.name} (+${a.opinion} opinion).`, 'good'); }
+    else if (action === 'trade') { E.trade = true; log(`⚖️ Trade agreement with the ${meta.name}: +2 gold/day each.`, 'good'); }
+    else if (action === 'nap') { G.res.gold -= a.cost.gold; E.nap = true; log(`🕊️ Non-aggression sworn with the ${meta.name}.`, 'good'); }
+    else if (action === 'pact') { E.pact = true; log(`🤝 Defensive pact with the ${meta.name} — they will answer if you are struck.`, 'good'); }
+    else if (action === 'alliance') { E.alliance = true; E.opinion = clamp(E.opinion + 10, -100, 100); log(`👑 ALLIANCE with the ${meta.name}!`, 'gold'); }
+    else if (action === 'threaten') {
+      if (playerPower() > E.strength * 1.3) { E.tributesPlayer = true; E.opinion -= 15; log(`🗡️ The ${meta.name} bows — 3 gold/day in tribute flows to ${G.capitalName}.`, 'gold'); }
+      else declareWarInternal(id, 'your insolent demand');
+    }
+    else if (action === 'war') declareWarInternal(id, 'your declaration');
+    else if (action === 'peace') {
+      G.res.gold -= 80; E.status = 'peace'; E.nap = true; E.opinion = clamp(E.opinion + 10, -100, 100);
+      log(`🏳️ Peace with the ${meta.name} (80 gold in reparations).`, 'good');
+    }
+    emit('all'); return true;
+  }
+  function resolveDiplo(accept) {
+    const p = G.pendingDiplo; if (!p) return false;
+    const E = G.empires[p.empire], meta = D.EMPIRES[p.empire];
+    if (p.kind === 'demand') {
+      if (accept) {
+        if (G.res.gold >= p.gold) { G.res.gold -= p.gold; E.opinion += 10; log(`💰 Paid ${p.gold} gold to appease the ${meta.name}.`, ''); }
+        else { E.playerTributes = true; log(`⛓️ You now pay tribute to the ${meta.name} (−3 gold/day, −stability).`, 'bad'); }
+      } else {
+        E.opinion -= 20;
+        if (Math.random() < 0.5) declareWarInternal(p.empire, 'your refusal to pay');
+        else log(`🗡️ The ${meta.name} seethes at your refusal.`, 'bad');
+      }
+    } else if (p.kind === 'offer_trade') {
+      if (accept) { E.trade = true; E.opinion += 8; log(`⚖️ Trade opened with the ${meta.name}: +2 gold/day each.`, 'good'); }
+      else E.opinion -= 5;
+    } else if (p.kind === 'offer_peace') {
+      if (accept) { E.status = 'peace'; E.nap = true; E.tributesPlayer = true; log(`🏳️ The ${meta.name} sues for peace and pays YOU tribute!`, 'gold'); }
+      else log(`⚔️ The war with the ${meta.name} grinds on.`, '');
+    }
+    G.pendingDiplo = null;
+    emit('all'); return true;
+  }
+
   // decrees
   function toggleFamilies() { G.decrees.families = !G.decrees.families; emit('all'); }
   function holdFestival() {
     const d = D.DECREES.festival;
-    if (G.over || G.decrees.festivalCd > 0 || G.res.food < d.cost.food || G.res.gold < d.cost.gold) return false;
-    G.res.food -= d.cost.food; G.res.gold -= d.cost.gold;
+    if (G.over || G.decrees.festivalCd > 0 || G.res.gold < d.cost.gold) return false;
+    G.res.gold -= d.cost.gold;
     G.decrees.festivalBoost = d.happyBoost; G.decrees.festivalCd = d.cooldown;
     log('🎉 A festival fills the streets — spirits soar!', 'good');
     emit('all'); return true;
@@ -872,12 +1113,31 @@ window.Game = (function () {
       emit('act1');
     } else if (G.act === 2 && a.mainSeatsOwned === a.mainSeatsTotal && a.mainOwned >= a.mainTotal - 4) {
       G.act = 3;
-      log('👑 THE KINGDOM OF HELLAS — Greece is unified! The Naval branch opens: build ships and take the sea.', 'gold');
+      log('👑 ACT III — THE NAVAL AGE. Greece is unified! Build ships and take the sea.', 'gold');
       emit('act2');
-    } else if (G.act === 3 && !G.victory && a.greekSeatsOwned === a.greekSeatsTotal) {
+    } else if (G.act === 3 && G.navalTier >= 1 && G.tool >= 3) {
+      G.act = 4;
+      log('⛏️ ACT IV — THE MINERAL AGE. Iron tools and iron hulls: dig deep and sail far for lapis & obsidian.', 'gold');
+      emit('act4');
+    } else if (G.act === 4 && G.tier >= 3 && Object.values(G.tiles).filter(t => t.overseas && isMine(t)).length >= 3) {
+      G.act = 5;
+      log('👑 ACT V — THE EMPIRE AGE. The eight powers now treat you as an equal — or a threat. Tribute, alliances, war.', 'gold');
+      emit('act5');
+    }
+    // milestone: all Greek seats united (any act ≥3)
+    if (G.act >= 3 && !G.victory && a.greekSeatsOwned === a.greekSeatsTotal) {
       G.victory = true;
-      log('🏛️ HELLAS UNITED — every Greek seat from Kythira to Thrace flies your banner. The Empire Stage awaits (P5).', 'gold');
+      log('🏛️ HELLAS UNITED — every Greek seat from Kythira to Thrace flies your banner.', 'gold');
       emit('victory');
+    }
+    // Act V goal: Master of the Middle Sea (Phase 6 brings the 400-tile finale)
+    if (G.act >= 5 && !G.empireVictory) {
+      const rivals = Object.entries(G.empires).filter(([id, E]) => !D.EMPIRES[id].distant);
+      if (rivals.length && rivals.every(([id, E]) => E.eliminated || E.tributesPlayer || E.alliance)) {
+        G.empireVictory = true;
+        log('🌊 MASTER OF THE MIDDLE SEA — every nearby empire bows, pays, or marches beside you! (The 400-tile Mediterranean awaits in Phase 6.)', 'gold');
+        emit('victory5');
+      }
     }
   }
 
@@ -891,7 +1151,7 @@ window.Game = (function () {
       log(`— ${season()}, Year ${G.year} —`, 'season');
       if (season() === 'Winter') log('❄ Winter: farms stall, foraging thins. Live on your stores.', '');
     }
-    produce(); popTick(); timersTick(); raidsTick(); researchTick(); checkTier(); checkVictory();
+    produce(); popTick(); timersTick(); raidsTick(); researchTick(); empiresTick(); checkTier(); checkVictory();
     emit('day');
   }
   function update(dtMs) {
@@ -916,6 +1176,8 @@ window.Game = (function () {
       G.techs = G.techs || []; G.research = G.research || null;
       G.culture = G.culture || 0; G.act = G.act || (G.victory ? 2 : 1);
       G.fest = G.fest || { heroes: 0, forge: 0, sea: 0 }; G.festCd = G.festCd || {};
+      if (!G.empires) { log('⚠ Pre-Phase-5 save — start a new game to meet the eight empires.'); G.empires = {}; }
+      G._sust = G._sust || 0; G.warExh = G.warExh || 0; G.mapMode = G.mapMode || 'normal';
       emit('all'); log('📂 Game loaded.'); return true;
     } catch (e) { return false; }
   }
@@ -934,7 +1196,7 @@ window.Game = (function () {
     newGame, update, skipDays, save, load, hasSave,
     get state() { return G; },
     neighbors, distFromCapital, roadConnected, tileName,
-    happiness, prodMult, popCap, foodCap, soldierCap, dailyFood, idle, assigned, countB, slots,
+    happiness, prodMult, popCap, soldierCap, idle, assigned, countB, slots,
     canScout, scout, canClaim, claim, claimCost, canColonize, colonize,
     canBuild, build, canRoad, road, canRecruit, recruit,
     canAttack, attack, canAbsorb, absorb,
@@ -948,6 +1210,10 @@ window.Game = (function () {
     // Phase 4 API
     hasTech, canResearch, setResearch, rpPerDay, culturePerDay,
     canFest, holdFest, actInfo,
+    // Phase 5 API
+    stability, coverage, sustenance, playerPower, warsActive,
+    canDiplo, diploAction, resolveDiplo,
+    setMapMode: m => { if (G && D.MAP_MODES.includes(m)) { G.mapMode = m; emit('mode'); } },
     season: () => G ? C.SEASONS[G.seasonIx] : 'Spring',
     setSpeed: s => { if (G) { G.speed = s; emit('hud'); } },
   };

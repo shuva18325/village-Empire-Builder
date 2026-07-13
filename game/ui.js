@@ -33,7 +33,7 @@ window.UI = (function () {
   function on(ev) {
     if (!Game.state) return;
     if (ev === 'log') paintLog();
-    else if (ev === 'day') { paintHUD(); paintLog(); MapView.draw(); paintTilePanel(); paintPop(); paintIndustry(); }
+    else if (ev === 'day') { paintHUD(); paintLog(); MapView.draw(); paintTilePanel(); paintPop(); paintIndustry(); paintDiplo(); }
     else if (ev === 'pop') { paintPop(); paintHUD(); paintIndustry(); }
     else if (ev === 'hud') paintSpeed();
     else if (ev === 'tile') { MapView.draw(); paintTilePanel(); }
@@ -41,11 +41,16 @@ window.UI = (function () {
     else if (ev === 'tier3') showTier3();
     else if (ev === 'act1') showAct1();
     else if (ev === 'act2') showAct2();
+    else if (ev === 'act4') showAct4();
+    else if (ev === 'act5') showAct5();
+    else if (ev === 'victory5') showVictory5();
+    else if (ev === 'diplo') showDiploEvent();
+    else if (ev === 'mode') { paintModes(); MapView.draw(); }
     else if (ev === 'victory') showVictory();
     else if (ev === 'defeat') showDefeat();
     else paintAll();
   }
-  function paintAll() { paintHUD(); paintPop(); paintDecrees(); paintIndustry(); paintLog(); paintTilePanel(); paintSpeed(); MapView.draw(); }
+  function paintAll() { paintHUD(); paintPop(); paintDecrees(); paintIndustry(); paintDiplo(); paintModes(); paintLog(); paintTilePanel(); paintSpeed(); MapView.draw(); }
   function ingotSummary(R) {
     return ['copper', 'bronze', 'iron', 'lapis', 'obsidian'].filter(m => (R[m] || 0) >= 1)
       .map(m => `${ICON[m]}${Math.floor(R[m])}`).join(' ');
@@ -73,7 +78,7 @@ window.UI = (function () {
     let trade = `<div class="isec"><b>🐫 Trade</b> `;
     if (Game.countB('resource_market') > 0) {
       trade += `<span class="dim">sell ×10:</span> `;
-      ['wood', 'stone', 'copper', 'iron', 'food'].forEach(r =>
+      ['wood', 'stone', 'copper', 'iron', 'gold' === 'never' ? 'x' : 'bronze'].forEach(r =>
         trade += `<button class="mini" onclick="Game.marketSell('${r}',10)" ${(R[r] || 0) >= 10 ? '' : 'disabled'} title="+${(10 * C.MARKET_SELL)}🪙">${ICON[r]}</button>`);
     } else trade += `<span class="dim">build a Resource Market & Trade Depots.</span>`;
     trade += `</div>`;
@@ -123,17 +128,50 @@ window.UI = (function () {
       <span class="dim">(+${Game.culturePerDay().toFixed(1)}/d)</span></h3>${head}${branches}`;
   }
 
+  // ---------- Phase 5: map mode buttons ----------
+  const MODE_META = { normal: ['🗺️', 'Normal'], political: ['👑', 'Political'], population: ['👥', 'Population'], resource: ['⛏️', 'Resource'], naval: ['⚓', 'Naval'] };
+  function paintModes() {
+    const G = Game.state; if (!G || !$('mapModes')) return;
+    $('mapModes').innerHTML = D.MAP_MODES.map(m =>
+      `<button class="mode ${G.mapMode === m ? 'on' : ''}" onclick="Game.setMapMode('${m}')" title="${MODE_META[m][1]} map">${MODE_META[m][0]} ${MODE_META[m][1]}</button>`).join('');
+  }
+
+  // ---------- Phase 5: diplomacy panel ----------
+  function paintDiplo() {
+    const G = Game.state; if (!G || !$('diploPanel')) return;
+    if (!G.empires || !Object.keys(G.empires).length) { $('diploPanel').innerHTML = ''; return; }
+    const rows = Object.entries(G.empires).map(([id, E]) => {
+      const meta = D.EMPIRES[id];
+      if (E.eliminated) return `<div class="isec dim"><b style="color:${meta.col}">■</b> ${meta.name} — <s>fallen</s></div>`;
+      const st = E.status === 'war' ? '<span class="warn">⚔️ WAR</span>'
+        : E.alliance ? '👑 Allied' : E.pact ? '🤝 Pact' : E.trade ? '⚖️ Trade' : E.nap ? '🕊️ NAP' : 'Peace';
+      const op = Math.round(E.opinion);
+      const opPct = Math.round((op + 100) / 2);
+      const trib = E.tributesPlayer ? ' · <span class="good">pays YOU</span>' : E.playerTributes ? ' · <span class="warn">you pay them</span>' : '';
+      const btns = Object.keys(D.DIPLO).map(a =>
+        `<button class="mini" onclick="Game.diploAction('${id}','${a}')" ${Game.canDiplo(id, a) ? '' : 'disabled'} title="${D.DIPLO[a].tip}">${D.DIPLO[a].icon}</button>`).join('');
+      return `<div class="isec">
+        <b style="color:${meta.col}">■</b> <b>${meta.name}</b> ${meta.distant ? '<span class="dim">(distant)</span>' : ''} — ${st}${trib}
+        <div class="obar" title="opinion ${op}"><div class="ofill" style="width:${opPct}%"></div></div>
+        <span class="dim">⚔ ${Math.round(E.strength)} vs yours ${Math.round(Game.playerPower())} · ⚓ navy ${E.navy}</span>
+        <div class="army">${btns}</div>
+      </div>`;
+    }).join('');
+    $('diploPanel').innerHTML = `<h3 class="phead">🕊️ Diplomacy — the Eight Powers</h3>${rows}`;
+  }
+
   // ---------- HUD ----------
   function paintHUD() {
     const G = Game.state, R = G.res;
     const h = Game.happiness();
-    const buffer = (R.food / Math.max(1, Game.dailyFood())).toFixed(1);
-    const realm = G.act >= 3 ? 'Kingdom of Hellas' : G.act === 2 ? 'The Peloponnesian League' : 'Chiefdom of the Morea';
+    const stab = Game.stability(), cov = Math.round(Game.coverage() * 100);
+    const realm = G.act >= 5 ? 'The Empire of Hellas' : G.act >= 3 ? 'Kingdom of Hellas' : G.act === 2 ? 'The Peloponnesian League' : 'Chiefdom of the Morea';
     $('hudTitle').innerHTML =
       `${G.flag ? `<img class="hudflag" src="${G.flag.png}" ${G.tier >= 3 ? 'style="outline:2px solid #7a3aa8"' : ''}>` : '⚑'} <b>${G.capitalName}</b>
        <span class="dim">· ${D.TIER_NAMES[G.tier]} (T${G.tier}) · ${realm}${G.flag ? ` · ${G.flag.dynasty}` : ''}</span>`;
     $('hudStats').innerHTML = [
-      st('🍖', Math.floor(R.food) + `<i>/${Game.foodCap()}</i>`, `Food (buffer ${buffer} days)`, R.food < Game.dailyFood() * 3 ? 'warn' : ''),
+      st('🛡️', stab + '%', `STABILITY — drives growth, morale, diplomacy & rebellion (${Game.warsActive()} wars)`, stab < 30 ? 'warn' : stab >= 70 ? 'good' : ''),
+      st('🌾', cov + '%', 'Sustenance coverage (farms, lodges, foragers vs. population)', cov < 80 ? 'warn' : ''),
       st('😊', h + '%', 'Happiness', h < 30 ? 'warn' : h >= 75 ? 'good' : ''),
       st('👥', Math.floor(G.pop) + `<i>/${Game.popCap()}</i>`, 'Population / capacity'),
       st('🪵', Math.floor(R.wood), 'Wood'),
@@ -153,8 +191,12 @@ window.UI = (function () {
       : G.act === 2
       ? `ACT II ⚑ ${a.mainOwned}/${a.mainTotal} mainland · ★ ${a.mainSeatsOwned}/${a.mainSeatsTotal}
          <span class="dim">— unify Greece to open the sea</span>`
-      : `ACT III ★ ${a.greekSeatsOwned}/${a.greekSeatsTotal} Greek seats
-         <span class="dim">— take the isles; the Empire Stage awaits</span>`;
+      : G.act === 3
+      ? `ACT III ★ ${a.greekSeatsOwned}/${a.greekSeatsTotal} Greek seats
+         <span class="dim">— iron tools + iron hulls open the Mineral Age</span>`
+      : G.act === 4
+      ? `ACT IV <span class="dim">— hold 3 overseas tiles at a Grand Capital (T3) → the EMPIRE AGE</span>`
+      : `ACT V <span class="dim">— make every nearby empire bow, pay or ally → Master of the Middle Sea (400-tile world: Phase 6)</span>`;
   }
   const st = (ic, v, tip, cls) => `<span class="stat ${cls || ''}" title="${tip}">${ic} ${v}</span>`;
   function paintSpeed() {
@@ -177,7 +219,7 @@ window.UI = (function () {
       const [ic, nm, tip] = JOB_META[j];
       const ctl = j === 'soldier'
         ? `<button class="mini" onclick="Game.jobRemove('soldier',1)">−</button>
-           <button class="mini" onclick="Game.recruit()" ${Game.canRecruit() ? '' : 'disabled'} title="20🍖 5🪵 (+1⛓️ if available)">recruit</button>`
+           <button class="mini" onclick="Game.recruit()" ${Game.canRecruit() ? '' : 'disabled'} title="10🪵 3🪙 at the Barracks">recruit</button>`
         : `<button class="mini" onclick="Game.jobRemove('${j}',1)">−</button>
            <button class="mini" onclick="Game.jobAdd('${j}',1)">+</button>
            <button class="mini" onclick="Game.jobAdd('${j}',5)">+5</button>`;
@@ -249,12 +291,14 @@ window.UI = (function () {
       return;
     }
     const own = t.owner === 'player';
-    const fac = (t.owner !== 'player' && t.owner !== 'neutral') ? D.FACTIONS[t.owner] : null;
+    const emp = D.EMPIRES[t.owner] ? Game.state.empires[t.owner] : null;
+    const empMeta = D.EMPIRES[t.owner] || null;
+    const fac = (!emp && t.owner !== 'player' && t.owner !== 'neutral') ? D.FACTIONS[t.owner] : null;
     let html = `<h3>${Game.tileName(t)} ${t.seat ? '★' : ''}${t.sacred ? '✦' : ''}</h3>
       <div class="kv"><span>Region</span><b>${t.regionName}</b></div>
       <div class="kv"><span>Terrain</span><b>${D.TERRAIN[t.terrain].name}${t.coastal ? ' · coast' : ''}${t.port ? ' ⚓port' : ''}${t.ore ? ' · ⛏ore' : ''}${t.rich ? ' (rich!)' : ''}</b></div>
       <div class="kv"><span>Danger</span><b>${'☠'.repeat(t.danger) || '—'}</b></div>
-      <div class="kv"><span>Owner</span><b>${own ? '⚑ You' : fac ? `${fac.icon} ${fac.name}` : 'Unclaimed'}</b></div>
+      <div class="kv"><span>Owner</span><b>${own ? '⚑ You' : empMeta ? `<span style="color:${empMeta.col}">■</span> ${empMeta.name}` : fac ? `${fac.icon} ${fac.name}` : 'Unclaimed'}</b></div>
       <div class="kv"><span>Riches</span><b class="dim">${t.res}</b></div>`;
     if (t.ores && t.ores.length) {
       html += `<div class="kv"><span>Ores</span><b>${t.ores.map(o => {
@@ -265,6 +309,10 @@ window.UI = (function () {
     if (t.hazards && t.hazards.length) html += `<div class="kv"><span>Hazards</span><b class="warn">${t.volcanic ? '🌋 ' : ''}${t.hazards.join(' · ')}</b></div>`;
     if (fac) html += `<div class="pad dim">"${fac.flavor}"</div>
       <div class="kv"><span>Warriors</span><b>${t.warriors}${t.camp ? ' (camp)' : ''}${t.fortress ? ' 🏰' : ''}</b></div>`;
+    if (empMeta) html += `<div class="pad dim">"${empMeta.tip}"</div>
+      <div class="kv"><span>Garrison</span><b>${t.warriors}${t.fortress || t.seat ? ' 🏰' : ''}</b></div>
+      <div class="kv"><span>Relations</span><b>${emp.status === 'war' ? '⚔️ AT WAR' : emp.alliance ? '👑 Allied' : emp.trade ? '⚖️ Trading' : emp.nap ? '🕊️ Pact' : 'Peace'} · opinion ${Math.round(emp.opinion)}</b></div>
+      <div class="dim pad">Attacking will mean WAR. Manage relations in the Diplomacy panel →</div>`;
 
     if (own) {
       html += `<div class="kv"><span>Development</span><b>DL ${Math.floor(t.dl)} · ${dlBand(t.dl)}</b></div>`;
@@ -276,7 +324,7 @@ window.UI = (function () {
         html += buildMenu(t);
       } else {
         html += `<button class="act" onclick="UI.act('colonize')" ${Game.canColonize(t) ? '' : 'disabled'}
-          title="${C.COLONIZE_POP} settlers + ${C.COLONIZE_WOOD}🪵 ${C.COLONIZE_FOOD}🍖">🏛️ Colonize (${C.COLONIZE_POP}👥 ${C.COLONIZE_WOOD}🪵 ${C.COLONIZE_FOOD}🍖)</button>`;
+          title="${C.COLONIZE_POP} settlers + ${C.COLONIZE_WOOD}🪵">🏛️ Colonize (${C.COLONIZE_POP}👥 ${C.COLONIZE_WOOD}🪵)</button>`;
       }
       if (!t.road) html += `<button class="act" onclick="UI.act('road')" ${Game.canRoad(t) ? '' : 'disabled'}
         title="Connects to the capital network: +25% output, banners, supply">🛤️ Road (${C.ROAD_STONE}🪨)</button>`;
@@ -400,6 +448,53 @@ window.UI = (function () {
       <div class="vstats">Year ${G.year} · Population ${Math.floor(G.pop)} · Tier ${G.tier} ·
         Techs ${G.techs.length}/${D.TECHS.length} · Battles ${s.battlesWon}W/${s.battlesLost}L</div>
       <button class="act" onclick="UI.closeModalV()">Continue ruling (sandbox)</button>`);
+  }
+  function showAct4() {
+    modal(`<h2>⛏️ ACT IV — THE MINERAL AGE</h2>
+      <p>Iron tools bite deeper; iron hulls sail farther. <b>Lapis and obsidian</b> wait in
+      Mani's burning shafts, on Delos, in Iberia's shadowed hills — the metals that will arm
+      your empire.</p>
+      <p class="dim">Reach a Grand Capital (T3) and hold 3 overseas tiles to enter the Empire Age.</p>
+      <button class="act" onclick="UI.closeModal2()">Dig deep (continue)</button>`);
+  }
+  function showAct5() {
+    modal(`<h2>👑 ACT V — THE EMPIRE AGE</h2>
+      <p>The eight powers now treat ${Game.state.capitalName} as a rival throne. Envoys arrive
+      with demands; fleets probe your ports. <b>Tribute, alliances, blockades, invasions</b> —
+      the games of empires begin.</p>
+      <p><b>Goal:</b> every nearby empire must bow (tribute), march beside you (alliance), or fall.</p>
+      <p class="dim">Beyond it: Phase 6 — the volcano, adamantine, and the FULL 400-tile Mediterranean.</p>
+      <button class="act" onclick="UI.closeModal2()">Let them come</button>`);
+  }
+  function showVictory5() {
+    const G = Game.state;
+    modal(`<h2>🌊 MASTER OF THE MIDDLE SEA</h2>
+      <p><b>Every nearby empire bows, pays, or marches beside the ${G.flag ? G.flag.dynasty : 'League'}.</b>
+      From the Peloponnese to Sicily and the Anatolian shore, the sea answers to ${G.capitalName}.</p>
+      <p class="dim">The finale awaits in Phase 6: the volcano's adamantine heart and the full
+      400-tile Mediterranean — Carthage, Kemet, Gaul, Mesopotamia.</p>
+      <button class="act" onclick="UI.closeModal2()">Rule on (sandbox)</button>`);
+  }
+  function showDiploEvent() {
+    const G = Game.state, p = G.pendingDiplo; if (!p) return;
+    const meta = D.EMPIRES[p.empire];
+    if (p.kind === 'demand') {
+      modal(`<h2 style="color:${meta.col}">🗡️ An ultimatum from the ${meta.name}</h2>
+        <p>"${G.capitalName} grows fat. Pay <b>${p.gold} gold</b> — or feed our soldiers instead."</p>
+        <p class="dim">Refusing risks war. Paying without gold makes you their tributary.</p>
+        <button class="act" onclick="Game.resolveDiplo(true);UI.closeModal2()">💰 Pay them</button>
+        <button class="act warlike" onclick="Game.resolveDiplo(false);UI.closeModal2()">🗡️ Refuse — let them try</button>`);
+    } else if (p.kind === 'offer_trade') {
+      modal(`<h2 style="color:${meta.col}">⚖️ Envoys of the ${meta.name}</h2>
+        <p>"Our ships are heavy with goods. Open your ports — <b>+2 gold/day for us both</b>."</p>
+        <button class="act" onclick="Game.resolveDiplo(true);UI.closeModal2()">⚖️ Accept the trade</button>
+        <button class="act" onclick="Game.resolveDiplo(false);UI.closeModal2()">Decline</button>`);
+    } else if (p.kind === 'offer_peace') {
+      modal(`<h2 style="color:${meta.col}">🏳️ The ${meta.name} sues for peace</h2>
+        <p>Bloodied and weary, they offer peace — <b>and tribute to YOU</b>.</p>
+        <button class="act" onclick="Game.resolveDiplo(true);UI.closeModal2()">🏳️ Accept their submission</button>
+        <button class="act warlike" onclick="Game.resolveDiplo(false);UI.closeModal2()">⚔️ Fight on</button>`);
+    }
   }
   function closeModal2() { closeModal(); paintAll(); }
   function closeModalV() { Game.state.victory = 'shown'; closeModal(); }

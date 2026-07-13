@@ -150,6 +150,14 @@ button { font: inherit; }
   #right { width: 100%; border-left: none; border-top: 2px solid var(--line); }
 }
 
+/* Phase 5: map modes + diplomacy */
+#mapModes { display: flex; gap: 6px; flex-wrap: wrap; padding-bottom: 6px; }
+.mode { background: var(--panel2); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 7px; padding: 3px 10px; cursor: pointer; font-size: 12px; }
+.mode.on { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+.obar { height: 6px; background: var(--panel2); border-radius: 3px; overflow: hidden; margin: 3px 0; }
+.ofill { height: 100%; background: linear-gradient(90deg, #c0392b, #d8c84e 50%, #7fd48a); }
+
 </style>
 <header id="hud">
     <div id="hudTitle">⚑ …</div>
@@ -165,6 +173,7 @@ button { font: inherit; }
 
   <main>
     <section id="left">
+      <div id="mapModes"></div>
       <canvas id="map"></canvas>
       <div id="legend">
         <span>⚑ yours</span><span>★ region seat</span><span>⚓ port</span><span>✦ sacred</span>
@@ -182,6 +191,7 @@ button { font: inherit; }
       </div>
       <div class="panel" id="industryPanel"></div>
       <div class="panel" id="techPanel"></div>
+      <div class="panel" id="diploPanel"></div>
       <div class="panel" id="logPanel">
         <h3 class="phead">🔔 Chronicle</h3>
         <div id="log"></div>
@@ -236,10 +246,10 @@ window.DATA = (function () {
   // out: {res, perWorker} · workers use the named job pool
   const BUILDINGS = {
     house:        { name: 'House',            icon: '🏠', cost: { wood: 20 },            days: 2, dl: 3, popCap: 5,  tip: '+5 population capacity, shelter.' },
-    breeding_hub: { name: 'Breeding Hub',     icon: '👶', cost: { wood: 30, food: 15 },  days: 3, dl: 3, birthMult: 1.15, tip: '+15% birth rate (nursery & family hall). Stacks up to 3.' },
-    farm:         { name: 'Farm',             icon: '🌾', cost: { wood: 20 },            days: 2, dl: 3, job: 'farmer', slots: 3, out: { res: 'food', per: 3.0 }, needs: 'farm',   tip: 'Farmers grow food (season-dependent). Plains/grassland.' },
-    hunters_lodge:{ name: "Hunter's Lodge",   icon: '🏹', cost: { wood: 15 },            days: 1, dl: 2, job: 'hunter', slots: 2, out: { res: 'food', per: 2.2 }, needs: 'hunt',   tip: 'Hunters bring game meat. Forest/hills/mountain.' },
-    granary:      { name: 'Granary',          icon: '🛖', cost: { wood: 25, stone: 15 }, days: 2, dl: 3, foodCap: CONST.GRANARY_CAP, tip: '+120 food storage — vital for winter.' },
+    breeding_hub: { name: 'Breeding Hub',     icon: '👶', cost: { wood: 35 },            days: 3, dl: 3, birthMult: 1.15, tip: '+15% birth rate (nursery & family hall). Stacks up to 3.' },
+    farm:         { name: 'Farm',             icon: '🌾', cost: { wood: 20 },            days: 2, dl: 3, job: 'farmer', slots: 3, out: { res: 'sust', per: 3.0 }, needs: 'farm',   tip: 'Farmers sustain the people (season-dependent) — feeds STABILITY & growth. Plains/grassland.' },
+    hunters_lodge:{ name: "Hunter's Lodge",   icon: '🏹', cost: { wood: 15 },            days: 1, dl: 2, job: 'hunter', slots: 2, out: { res: 'sust', per: 2.2 }, needs: 'hunt',   tip: 'Hunters sustain the people. Forest/hills/mountain.' },
+    granary:      { name: 'Granary',          icon: '🛖', cost: { wood: 25, stone: 15 }, days: 2, dl: 3, stabAdd: 2, winterSust: 8, tip: '+2 stability (reserves) and +8 sustenance through winter.' },
     lumber_camp:  { name: 'Lumber Camp',      icon: '🪓', cost: { wood: 10 },            days: 1, dl: 2, job: 'builder', slots: 2, out: { res: 'wood', per: 2.0 }, needs: 'lumber', tip: 'Builders cut wood. Forest only.' },
     quarry:       { name: 'Quarry',           icon: '⛏️', cost: { wood: 25 },            days: 2, dl: 3, job: 'miner', slots: 2, out: { res: 'stone', per: 1.5 }, needs: 'mine',   tip: 'Miners cut stone. Hills/mountain.' },
     market:       { name: 'Market',           icon: '🏪', cost: { wood: 30, stone: 20 }, days: 3, dl: 4, job: 'builder', slots: 1, out: { res: 'gold', per: 2.0 }, tip: 'Trade income (×1.5 on ports). +0.3 influence/day.' },
@@ -326,7 +336,7 @@ window.DATA = (function () {
   const STARTS = [
     { id: 'sparta',     name: 'Sparta',     seat: [16,13], diff: 2, bias: { metal: 5,  atk: 0.05 },  tip: 'Minerals + military. Fast weapons, slower food.' },
     { id: 'corinth',    name: 'Corinth',    seat: [17,9],  diff: 2, bias: { gold: 30, influence: 5 },tip: 'Trade + naval. Gold-rich, exposed to brigands.' },
-    { id: 'kalamata',   name: 'Kalamata',   seat: [13,14], diff: 1, bias: { food: 60 },              tip: 'Food + growth. A population engine.' },
+    { id: 'kalamata',   name: 'Kalamata',   seat: [13,14], diff: 1, bias: { gold: 25, happy: 2 },    tip: 'Fertile valleys: growth + trade.' },
     { id: 'nafplio',    name: 'Nafplio',    seat: [18,11], diff: 1, bias: { stone: 20, def: 0.05 },  tip: 'Balanced trade + defense.' },
     { id: 'argos',      name: 'Argos',      seat: [17,11], diff: 1, bias: { influence: 10, happy: 3 },tip: 'Culture + farming. Happiness engine.' },
     { id: 'mani',       name: 'Mani',       seat: [15,14], diff: 4, bias: { metal: 10 },             tip: 'Rare ores, little food. The hard road.' },
@@ -370,7 +380,7 @@ window.DATA = (function () {
   // --- decrees (docs/05 §5, slice trio) ----------------------------------------
   const DECREES = {
     families:     { name: 'Encourage Families', icon: '👪', toggle: true, birthMult: 1.3, happy: -2, tip: '+30% births while active, −2 happiness.' },
-    festival:     { name: 'Hold a Festival',    icon: '🎉', cost: { food: 40, gold: 20 }, happyBoost: 12, boostDays: 10, cooldown: 30, tip: '+12 happiness fading over 10 days. 30-day cooldown.' },
+    festival:     { name: 'Hold a Festival',    icon: '🎉', cost: { gold: 40 }, happyBoost: 12, boostDays: 10, cooldown: 30, tip: '+12 happiness fading over 10 days. 30-day cooldown.' },
     conscription: { name: 'Conscription',       icon: '🪖', cost: {}, pop: 5, happy: -5, needsBarracks: true, tip: 'Turn 5 idle folk into militia at once (−5 happiness).' },
   };
 
@@ -495,6 +505,62 @@ window.DATA = (function () {
   // --- Phase 4 capital tiers ----------------------------------------------------
   const TIER_NAMES = { 1: 'Early Capital', 2: 'Developed Capital', 3: 'Grand Capital · Porphyrogennetos' };
 
+  // ===========================================================================
+  // PHASE 5 — EMPIRES, DIPLOMACY, MAP MODES, STABILITY
+  // ===========================================================================
+
+  // The eight empires (docs/15 §8). Five live on this map; three are DISTANT
+  // powers (Kemet, Gaul, Mesopotamia) whose homelands arrive with the full
+  // 400-tile Mediterranean in Phase 6 — they trade, scheme and raid by sea.
+  const EMPIRES = {
+    anatolia:   { name: 'Empire of Anatolia',            col: '#c26b2e', home: ['lydia'],        expandInto: ['lydia', 'ionia'],  personality: 'expansionist', distant: false, navy: 1, strength: 34, flagPref: ['elder_rune', 'crimson_eagle'], tip: 'Heavy infantry and chariot lords, hungry for the Aegean coast.' },
+    phoenicia:  { name: 'Phoenician Coastal Dominion',   col: '#d0342c', home: ['sicily'],       expandInto: ['sicily'],          personality: 'merchant',     distant: false, navy: 3, strength: 24, flagPref: ['ringed_cross', 'eternal_ankh'], tip: 'Masters of the sea lanes — they buy before they burn. Their colonies band the coasts in red.' },
+    italic:     { name: 'Italic Maritime Empire',        col: '#7a4a9e', home: ['magna_graecia'],expandInto: ['magna_graecia', 'sicily'], personality: 'expansionist', distant: false, navy: 2, strength: 30, flagPref: ['crimson_eagle', 'labarum'], tip: 'Disciplined legions and growing fleets across the strait.' },
+    illyria:    { name: 'Illyrian Highland Despotate',   col: '#5a6e8a', home: ['illyria'],      expandInto: ['illyria', 'moesia'], personality: 'raider',     distant: false, navy: 1, strength: 26, flagPref: ['descending_dove', 'holy_cross'], tip: 'Mountain ambushers; iron mastery; they respect only strength.' },
+    iberia:     { name: 'Iberian Hill Kingdoms',         col: '#4a7a3e', home: ['iberia_east'],  expandInto: ['iberia_east'],     personality: 'defensive',    distant: false, navy: 1, strength: 22, flagPref: ['holy_cross', 'descending_dove'], tip: 'Guerrilla hill-clans over silver and shadowed iron.' },
+    kemet:      { name: 'Kingdom of Kemet',              col: '#d4a017', home: [],               expandInto: [],                  personality: 'merchant',     distant: true,  navy: 2, strength: 36, flagPref: ['eternal_ankh'], tip: 'The Nile colossus. Its granaries are bottomless — its homeland arrives with the full Mediterranean (Act VI).' },
+    gaul:       { name: 'Gaulish Grand Kingdom',         col: '#3e8a7a', home: [],               expandInto: [],                  personality: 'expansionist', distant: true,  navy: 0, strength: 32, flagPref: ['vergina_sun'], tip: 'Proud hosts and heavy horse beyond the Alps — beyond the horizon for now.' },
+    mesopotamia:{ name: 'Mesopotamian Imperial Satrapy', col: '#35589e', home: [],               expandInto: [],                  personality: 'defensive',    distant: true,  navy: 1, strength: 38, flagPref: ['golden_rho'], tip: 'The old power of the Twin Rivers; siege-masters. Their satrapies arrive with the full map.' },
+  };
+  const EMPIRE_TILE_GARRISON = 8;      // warriors per empire-held tile
+  const EMPIRE_SEAT_GARRISON = 14;
+
+  // Diplomacy actions (player side) — availability & costs
+  const DIPLO = {
+    gift:      { name: 'Send Gift',          icon: '🎁', cost: { gold: 50 },    opinion: +12, tip: '+12 opinion. Gold speaks every tongue.' },
+    exchange:  { name: 'Cultural Exchange',  icon: '🎭', cost: { culture: 30 }, opinion: +15, tip: '+15 opinion. Poets, plays & marriages.' },
+    trade:     { name: 'Trade Agreement',    icon: '⚖️', minOpinion: 0,   tip: 'Both earn +2 gold/day. Needs opinion ≥ 0.' },
+    nap:       { name: 'Non-Aggression Pact',icon: '🕊️', cost: { gold: 30 }, minOpinion: -10, tip: 'No invasions either way. Needs opinion ≥ −10.' },
+    pact:      { name: 'Defensive Pact',     icon: '🤝', minOpinion: 25, needs: 'nap', tip: 'They join your defense. Needs NAP + opinion ≥ 25.' },
+    alliance:  { name: 'Alliance',           icon: '👑', minOpinion: 45, needs: 'trade', tip: 'Full alliance: shared cause, +3 gold/day. Needs trade + opinion ≥ 45.' },
+    threaten:  { name: 'Demand Tribute',     icon: '🗡️', tip: 'If your armies dwarf theirs they pay 3 gold/day — otherwise it means WAR.' },
+    war:       { name: 'Declare War',        icon: '⚔️', tip: 'Open invasions, sieges & blockades. War exhausts stability.' },
+    peace:     { name: 'Sue for Peace',      icon: '🏳️', tip: 'End the war. If you are losing, expect to pay.' },
+  };
+
+  // --- map modes & the population gradient (8 purples, light → imperial) -------
+  const MAP_MODES = ['normal', 'political', 'population', 'resource', 'naval'];
+  const POP_COLORS = ['#e6d9f2', '#d4bfe8', '#c2a5de', '#a983d1', '#8f62c4', '#7443ae', '#5a2d96', '#3f1a7a'];
+  // political mode palette — matched to the user's reference atlas (cyan sea, tan land)
+  const POLITICAL = { sea: '#8fd8ea', seaDeep: '#6ec4dc', land: '#e9c96b', landEdge: '#8a6a20', neutral: '#e9c96b', player: '#f4c400' };
+
+  // --- Phase 5 acts ------------------------------------------------------------
+  const ACTS = {
+    1: { name: 'Act I — Unite the Peloponnese' },
+    2: { name: 'Act II — Unify Greece' },
+    3: { name: 'Act III — The Naval Age' },
+    4: { name: 'Act IV — The Mineral Age' },
+    5: { name: 'Act V — The Empire Age' },
+    6: { name: 'Act VI — The Full Mediterranean (Phase 6: the 400-tile world)' }, // P6 hook
+  };
+
+  // --- Phase 6 hooks (NOT active): advanced minerals & the 400-tile world ------
+  const P6_HOOKS = {
+    advancedMinerals: ['adamantine', 'magma_glass', 'deep_crystal', 'lapis_steel'],
+    fullMapTiles: 400,
+    volcanoRegions: ['mani', 'sicily'],   // eruption system lands here in P6
+  };
+
   // minor overseas garrison faction (NOT an enemy empire — just tile danger)
   FACTIONS.natives = { name: 'Native Warbands', icon: '⚔️', col: '#6a6a72', campWar: 12, pw: 4.5, raids: false,
     flavor: 'Fierce local warbands. Only a metal-armed host will take these shores.' };
@@ -604,7 +670,9 @@ window.DATA = (function () {
 
   return { CONST, TERRAIN, BUILDINGS, JOBS, TILES, REGIONS, REGION_SPECS, FACTIONS, STARTS, FLAGS, DECREES,
            ORES, INGOTS, TOOLS, GEAR_TIERS, HAZARDS, SHIPS, EXPANSION,
-           TECHS, TECH_BRANCHES, FESTS4, TIER_NAMES };
+           TECHS, TECH_BRANCHES, FESTS4, TIER_NAMES,
+           EMPIRES, DIPLO, MAP_MODES, POP_COLORS, POLITICAL, ACTS, P6_HOOKS,
+           EMPIRE_TILE_GARRISON, EMPIRE_SEAT_GARRISON };
 })();
 
 ;
@@ -678,7 +746,7 @@ window.Game = (function () {
       capitalName: null, tier: 1, flag: null,
       pop: 10, jobs: { farmer: 2, hunter: 3, builder: 3, miner: 0, soldier: 0 },
       soldiersArmed: 0,                // soldiers equipped with metal (power 5 vs 3)
-      res: { food: 60, wood: 40, stone: 10, metal: 0, gold: 0 },
+      res: { wood: 40, stone: 10, metal: 0, gold: 10 },
       influence: 15,
       statuses: {},                    // id -> daysLeft
       decrees: { families: false, festivalCd: 0, festivalBoost: 0 },
@@ -691,7 +759,7 @@ window.Game = (function () {
     };
     // apply start bias
     const b = start.bias || {};
-    ['food', 'wood', 'stone', 'metal', 'gold'].forEach(r => { if (b[r]) G.res[r] += b[r]; });
+    ['wood', 'stone', 'metal', 'gold'].forEach(r => { if (b[r]) G.res[r] += b[r]; });
     if (b.influence) G.influence += b.influence;
     G.bias = { atk: b.atk || 0, def: b.def || 0, happy: b.happy || 0 };
 
@@ -712,6 +780,33 @@ window.Game = (function () {
     G.fest = { heroes: 0, forge: 0, sea: 0 };            // active festival day counters
     G.festCd = {};                                       // festival cooldowns
 
+    // --- Phase 5 state: empires, diplomacy, stability ---
+    G._sust = 0;                                          // sustenance produced today
+    G.warExh = 0;                                         // war exhaustion (decays)
+    G.pendingDiplo = null;                                // one envoy at a time
+    G.mapMode = 'normal';
+    G.empires = {};
+    const takenFlags = new Set();
+    Object.entries(D.EMPIRES).forEach(([id, meta]) => {
+      const flag = meta.flagPref.find(f => !takenFlags.has(f)) || meta.flagPref[0];
+      takenFlags.add(flag);
+      G.empires[id] = {
+        id, flag, strength: meta.strength, navy: meta.navy, gold: 60,
+        opinion: meta.personality === 'merchant' ? 10 : meta.personality === 'raider' ? -15 : meta.personality === 'expansionist' ? -5 : 0,
+        status: 'peace', trade: false, nap: false, pact: false, alliance: false,
+        tributesPlayer: false, playerTributes: false, eliminated: false,
+        timers: { expand: 10 + Math.floor(Math.random() * 8), diplo: 20 + Math.floor(Math.random() * 15), invade: 12 },
+      };
+      // seat their homelands on the map
+      meta.home.forEach(rg => Object.values(G.tiles).forEach(t => {
+        if (t.region === rg && (t.owner === 'neutral' || t.owner === 'natives')) {
+          t.owner = id; t.camp = false;
+          t.warriors = t.seat ? D.EMPIRE_SEAT_GARRISON : D.EMPIRE_TILE_GARRISON;
+          if (t.seat) { t.settled = true; t.dl = Math.max(t.dl, 18); }
+        }
+      }));
+    });
+
     // capital tile: liberate its faction (you ARE these people), settle it
     const cap = T(G.capital);
     const fac = cap.owner !== 'neutral' ? cap.owner : null;
@@ -728,7 +823,7 @@ window.Game = (function () {
       if (D.FACTIONS[f].raids) G.raidTimers[f] = ri(...D.FACTIONS[f].raidEvery);
     });
     log(`The Chiefdom of the Morea is founded at ${G.capitalName}. Survive, grow, unite the Peloponnese.`, 'good');
-    log(`🍖 Your stores won't last: build a Hunter's Lodge or Farm on the capital before the food runs out!`, '');
+    log(`🌾 Build a Hunter's Lodge or Farm quickly — an unsustained people loses STABILITY and dwindles.`, '');
     emit('all');
     return G;
   }
@@ -743,15 +838,6 @@ window.Game = (function () {
       t.buildings.forEach(b => c += D.BUILDINGS[b].popCap || 0);
       cap += c;
     });
-    return cap;
-  }
-  function foodCap() {
-    let cap = C.FOOD_CAP_BASE;
-    const granaryBonus = hasTech('agri2') ? 60 : 0;
-    ownedTiles().forEach(t => t.buildings.forEach(b => {
-      cap += D.BUILDINGS[b].foodCap || 0;
-      if (b === 'granary') cap += granaryBonus;
-    }));
     return cap;
   }
   function soldierCap() {
@@ -863,6 +949,32 @@ window.Game = (function () {
     return '—';
   }
 
+  // ---------- Phase 5: sustenance & STABILITY (food system replaced) ----------
+  const sustenance = () => G._sust || 0;
+  function coverage() {                     // how well the people are sustained (1.0 = fully)
+    const need = Math.max(1, Math.floor(G.pop) * 1.0 + G.jobs.soldier * 0.15);
+    return clamp((G._sust || 0) / need, 0, 2);
+  }
+  function tributePressure() {
+    return Object.values(G.empires || {}).filter(E => E.playerTributes && !E.eliminated).length * 5;
+  }
+  function warsActive() {
+    return Object.values(G.empires || {}).filter(E => E.status === 'war' && !E.eliminated).length;
+  }
+  function stability() {
+    const h = happiness();
+    let st = 18 + h * 0.45
+      + clamp((popCap() - G.pop) / Math.max(1, G.pop) * 15, -10, 8)      // housing
+      + Math.min(12, culturePerDay() * 4)                                 // culture
+      + (G.decrees.festivalBoost > 0 ? 4 : 0)
+      + (Object.values(G.fest).some(v => v > 0) ? 5 : 0)                  // grand festivals
+      + (G.flag ? 3 : 0) + (G.tier - 1) * 4                               // dynasty + capital tier
+      + Math.min(8, countB('granary') * (D.BUILDINGS.granary.stabAdd || 0))
+      - warsActive() * 4 - (G.warExh || 0) - tributePressure();
+    return clamp(Math.round(st), 0, 100);
+  }
+  const moraleMult = () => 0.85 + stability() / 100 * 0.25;
+
   // food source variety (forage + hunt + farm active; husbandry adds herds)
   function foodSources() {
     let n = 0;
@@ -875,7 +987,7 @@ window.Game = (function () {
 
   function happiness() {
     const cap = popCap();
-    const buffer = G.res.food / Math.max(1, dailyFood());
+    const cov = coverage();
     let h = 50;
     h += Math.min(12, foodSources() * 4);                          // variety
     h += clamp((cap - G.pop) / Math.max(1, G.pop) * 20, 0, 10);    // shelter
@@ -892,22 +1004,18 @@ window.Game = (function () {
     if (G.statuses.fearful) h -= 8;
     if (G.statuses.overworked) h -= 8;
     h -= clamp((G.pop - cap) * 1.5, 0, 15);                        // overcrowding
-    if (buffer < 2) h -= 15; else if (buffer < 5) h -= 7;          // hunger fear
+    if (cov < 0.7) h -= 15; else if (cov < 0.9) h -= 7;            // the people go wanting
     return clamp(Math.round(h), 0, 100);
   }
   const prodMult = () => 0.6 + happiness() / 100 * 0.8;
 
-  function dailyFood() {
-    return Math.floor(G.pop) * C.FOOD_PER_POP * (season() === 'Winter' ? 1.05 : 1)
-      + G.jobs.soldier * C.SOLDIER_FOOD;
-  }
 
   // building production for one day
   function produce() {
     const pm = prodMult(), conn = roadConnected();
     const pools = { farmer: G.jobs.farmer, hunter: G.jobs.hunter, builder: G.jobs.builder, miner: G.jobs.miner };
-    const gains = { food: 0, wood: 0, stone: 0, gold: 0 };
-    gains.food += idle() * 0.2 * (season() === 'Winter' ? 0.5 : 1);
+    const gains = { sust: 0, wood: 0, stone: 0, gold: 0 };
+    gains.sust += idle() * 0.2 * (season() === 'Winter' ? 0.5 : 1);   // foragers
     G._mineBlocked = false;                              // UI hint: tool too weak somewhere
 
     ownedTiles().forEach(t => {
@@ -944,8 +1052,9 @@ window.Game = (function () {
         gains[b.out.res] += take * b.out.per * mult;
       });
     });
-    gains.food += (pools.hunter || 0) * 1.2 * C.SEASON_HUNT[season()] * pm;
-    gains.food += (pools.farmer || 0) * 0.3;
+    gains.sust += (pools.hunter || 0) * 1.2 * C.SEASON_HUNT[season()] * pm;   // wild hunting
+    gains.sust += (pools.farmer || 0) * 0.3;                                   // gleaning
+    if (season() === 'Winter') gains.sust += countB('granary') * (D.BUILDINGS.granary.winterSust || 0);
 
     // ---- REFINING: Ore → Ingot (Smelter/Bloomery/Kiln) & alloy (Crucible) ----
     const refineRate = C.REFINE_RATE * (0.7 + pm * 0.3) * (G.fest.forge > 0 ? 1.25 : 1);
@@ -972,11 +1081,29 @@ window.Game = (function () {
     gains.gold += ownedTiles().filter(t => t.port && t.settled).length * 0.4
       * (hasTech('trade3') ? 1.3 : 1) * tradeMult;
 
-    if (happiness() >= 55) ownedTiles().forEach(t => {
+    // ---- Phase 5 empire economy: tribute, treaties, naval tolls, blockades ----
+    let extGold = 0, blockaded = false;
+    Object.values(G.empires).forEach(E => {
+      if (E.eliminated) return;
+      if (E.tributesPlayer) extGold += 3;
+      if (E.trade) extGold += 2;
+      if (E.alliance) extGold += 1;
+      if (E.status === 'war' && E.navy > G.navalTier + Object.keys(G.ships).length * 0) blockaded = blockaded || E.navy > G.navalTier;
+    });
+    const ports = ownedTiles().filter(t => t.port && t.settled).length;
+    const shipsTotal = Object.values(G.ships).reduce((a, b) => a + b, 0);
+    if (!blockaded && G.navalTier >= 1) extGold += Math.min(ports, shipsTotal) * 0.6;   // naval tolls
+    if (blockaded) {
+      extGold -= ports * 0.2;
+      if (!G._blockWarned) { log('⛵ BLOCKADE — an enemy fleet chokes your ports! Trade gold suffers.', 'bad'); G._blockWarned = true; }
+    } else G._blockWarned = false;
+    gains.gold += extGold - Object.values(G.empires).filter(E => E.playerTributes && !E.eliminated).length * 3; // tribute you pay
+
+    if (stability() >= 55) ownedTiles().forEach(t => {
       if (t.settled) t.dl = Math.min(100, t.dl + (conn.has(t.key) ? 0.2 : 0.1));
     });
-    G.res.food = Math.min(foodCap(), G.res.food + gains.food);
-    G.res.wood += gains.wood; G.res.stone += gains.stone; G.res.gold += gains.gold;
+    G._sust = gains.sust;
+    G.res.wood += gains.wood; G.res.stone += gains.stone; G.res.gold = Math.max(0, G.res.gold + gains.gold);
     let infl = C.INFLUENCE_BASE + countB('market') * 0.3;
     ownedTiles().forEach(t => t.buildings.forEach(b => infl += D.BUILDINGS[b].influence || 0));
     G.influence += infl;
@@ -1025,30 +1152,35 @@ window.Game = (function () {
 
   // population growth/decline
   function popTick() {
-    const h = happiness();
-    const buffer = G.res.food / Math.max(1, dailyFood());
-    const foodFactor = clamp(buffer / 5, 0, 1.5);
+    const h = happiness(), st = stability(), cov = coverage();
+    const sustFactor = clamp(cov, 0, 1.3);
     const housing = clamp((popCap() - G.pop) / Math.max(1, G.pop * 0.2), 0, 1.2);
     let policy = G.decrees.families ? D.DECREES.families.birthMult : 1;
     policy *= Math.pow(D.BUILDINGS.breeding_hub.birthMult, Math.min(3, countB('breeding_hub')));
     policy *= 1 + flagBonus('birth');
-    const births = Math.floor(G.pop) * C.BASE_BIRTH * foodFactor * housing
-      * (0.4 + h / 100) * policy * C.SEASON_BIRTH[season()];
-    const starving = G.res.food <= 0 ? 1 : 0;
-    const deaths = Math.floor(G.pop) * C.BASE_DEATH * (1 + starving * 3);
+    const births = Math.floor(G.pop) * C.BASE_BIRTH * sustFactor * housing
+      * (0.5 + st / 100 * 0.8) * policy * C.SEASON_BIRTH[season()];
+    const wanting = cov < 0.5 ? 1 : 0;
+    const deaths = Math.floor(G.pop) * C.BASE_DEATH * (1 + wanting * 3);
     G.pop = Math.max(0, G.pop + births - deaths);
-    // consumption
-    G.res.food = Math.max(0, G.res.food - dailyFood());
-    if (starving) {
-      if (!G._starveWarned) { log('⚠ FAMINE — your people are starving!', 'bad'); G._starveWarned = true; }
-      // starvation can shed workers
+    if (wanting) {
+      if (!G._starveWarned) { log('⚠ WANT — the land cannot sustain your people! Build farms & lodges.', 'bad'); G._starveWarned = true; }
       if (Math.random() < 0.3 && G.pop > 0) shedWorker();
     } else G._starveWarned = false;
-    // clamp jobs to pop
     while (assigned() > Math.floor(G.pop)) shedWorker();
-    // statuses driven by state
-    if (buffer >= 8 && foodSources() >= 3) setStatus('wellfed', 2);
-    if (h >= 75 && buffer >= 5) setStatus('prosperous', 2);
+    if (cov >= 1.15 && foodSources() >= 3) setStatus('wellfed', 2);
+    if (h >= 75 && cov >= 1) setStatus('prosperous', 2);
+    // Phase 5: unrest & rebellion at rock-bottom stability
+    if (st < 25 && Math.random() < 0.02) {
+      const towns = ownedTiles().filter(t => t.settled && t.key !== G.capital);
+      if (towns.length) {
+        const t = towns[ri(0, towns.length - 1)];
+        t.dl = Math.max(0, t.dl - 5); G.pop = Math.max(0, G.pop - 2);
+        setStatus('fearful', 4);
+        log(`🔥 UNREST in ${tileName(t)} — stability ${st}% breeds rebellion!`, 'bad');
+      }
+    }
+    if ((G.warExh || 0) > 0) G.warExh = Math.max(0, G.warExh - 0.1);
     if (G.pop <= 0 && !G.over) { G.over = true; emit('defeat'); }
   }
   function shedWorker() {
@@ -1136,11 +1268,11 @@ window.Game = (function () {
         log(`🛡️ ${D.FACTIONS[f].name} raided ${tileName(target)} — repelled by your garrison!`, 'good');
         setStatus('heroic', 3);
       } else {
-        const foodLoss = Math.floor(G.res.food * 0.2), popLoss = ri(0, 2);
-        G.res.food -= foodLoss; G.pop = Math.max(0, G.pop - popLoss);
+        const goldLoss = Math.floor(G.res.gold * 0.25), woodLoss = Math.floor(G.res.wood * 0.15), popLoss = ri(0, 2);
+        G.res.gold -= goldLoss; G.res.wood -= woodLoss; G.pop = Math.max(0, G.pop - popLoss);
         G.stats.raidsSuffered++;
         setStatus('fearful', 4);
-        log(`🔥 ${D.FACTIONS[f].name} raided ${tileName(target)}! Lost ${foodLoss} food${popLoss ? `, ${popLoss} people` : ''}.`, 'bad');
+        log(`🔥 ${D.FACTIONS[f].name} raided ${tileName(target)}! Lost ${goldLoss} gold, ${woodLoss} wood${popLoss ? `, ${popLoss} people` : ''}.`, 'bad');
       }
       emit('all');
     });
@@ -1192,12 +1324,12 @@ window.Game = (function () {
   function canColonize(t) {
     return isMine(t) && !t.settled && !G.over &&
       Math.floor(G.pop) - assigned() >= 0 && G.pop >= C.COLONIZE_POP + 4 &&
-      G.res.wood >= C.COLONIZE_WOOD && G.res.food >= C.COLONIZE_FOOD;
+      G.res.wood >= C.COLONIZE_WOOD;
   }
   function colonize(key) {
     const t = T(key);
     if (!canColonize(t)) return false;
-    G.pop -= C.COLONIZE_POP; G.res.wood -= C.COLONIZE_WOOD; G.res.food -= C.COLONIZE_FOOD;
+    G.pop -= C.COLONIZE_POP; G.res.wood -= C.COLONIZE_WOOD;
     while (assigned() > Math.floor(G.pop)) shedWorker();
     t.settled = true; t.buildings.push('village_center');
     t.dl = Math.min(100, t.dl + D.BUILDINGS.village_center.dl);
@@ -1249,11 +1381,11 @@ window.Game = (function () {
 
   function canRecruit() {
     return !G.over && countB('barracks') > 0 && G.jobs.soldier < soldierCap() &&
-      idle() >= 1 && G.res.food >= 20 && G.res.wood >= 5;
+      idle() >= 1 && G.res.gold >= 3 && G.res.wood >= 10;
   }
   function recruit() {
     if (!canRecruit()) return false;
-    G.res.food -= 20; G.res.wood -= 5;
+    G.res.gold -= 3; G.res.wood -= 10;
     G.army.militia++; syncSoldiers();
     log('🪖 Recruited a militiaman — equip them with metal at the Forge.');
     emit('all'); return true;
@@ -1333,13 +1465,16 @@ window.Game = (function () {
     const t = T(key);
     count = clamp(count || G.jobs.soldier, 1, G.jobs.soldier);
     if (!canAttack(t)) return false;
+    const emp = G.empires[t.owner];                       // Phase 5: empire tiles
+    if (emp && emp.status !== 'war') declareWarInternal(t.owner, 'Your assault on ' + tileName(t));
     const fs = forceStats(count);
-    let atk = (fs.atk + fs.morale) * rnd(0.9, 1.1);
+    let atk = (fs.atk + fs.morale) * rnd(0.9, 1.1) * moraleMult();
     atk *= 1 + flagBonus('atk') + G.bias.atk + (G.statuses.heroic ? 0.10 : 0)
       + (hasTech('war1') ? 0.05 : 0)                       // Drill
       + (G.fest.heroes > 0 ? 0.10 : 0)                     // Festival of Heroes
       + (G.tier >= 3 && hasTech('war3') ? 0.05 : 0);       // Elite Guard vanguard
-    let def = t.warriors * D.FACTIONS[t.owner].pw * D.TERRAIN[t.terrain].def * rnd(0.9, 1.1);
+    const defPw = emp ? (3 + emp.strength / 12) : D.FACTIONS[t.owner].pw;
+    let def = t.warriors * defPw * D.TERRAIN[t.terrain].def * rnd(0.9, 1.1);
     if (t.fortress) def *= 1.5;
     // siege ability cuts fortress / mountain defense (Siegecraft bites harder)
     const siegePer = hasTech('war2') ? 0.03 : 0.02;
@@ -1355,8 +1490,13 @@ window.Game = (function () {
       G.stats.battlesWon++; G.stats.tilesTaken++;
       setStatus('heroic', 5);
       log(`🎖️ Victory at ${tileName(t)}! ${wasCamp ? 'The camp is razed. ' : ''}Losses: ${losses}.`, 'good');
-      // faction collapse: no camps left -> their tiles go neutral
-      if (!Object.values(G.tiles).some(x => x.owner === fac && x.camp)) {
+      if (emp) {                                          // struck an empire
+        emp.strength = Math.max(4, emp.strength - 5);
+        if (!Object.values(G.tiles).some(x => x.owner === fac)) {
+          emp.eliminated = true; emp.status = 'peace';
+          log(`🏛️ THE ${D.EMPIRES[fac].name.toUpperCase()} HAS FALLEN — its last city is yours!`, 'gold');
+        }
+      } else if (!Object.values(G.tiles).some(x => x.owner === fac && x.camp)) {
         Object.values(G.tiles).forEach(x => { if (x.owner === fac) { x.owner = 'neutral'; x.warriors = 0; } });
         delete G.raidTimers[fac];
         log(`🏳️ The ${D.FACTIONS[fac].name} submit! Their lands lie open to your claim.`, 'good');
@@ -1364,6 +1504,7 @@ window.Game = (function () {
       checkTier(); checkVictory();
     } else {
       G.stats.battlesLost++;
+      G.warExh = Math.min(20, (G.warExh || 0) + 2);
       setStatus('fearful', 4);
       log(`💀 Defeat at ${tileName(t)}. ${losses} soldiers fell; the rest fled home.`, 'bad');
     }
@@ -1386,12 +1527,180 @@ window.Game = (function () {
     checkTier(); checkVictory(); emit('all'); return true;
   }
 
+  // ==================== PHASE 5: EMPIRES & DIPLOMACY ====================
+  const playerPower = () => forceStats(G.jobs.soldier).atk + Object.values(G.ships).reduce((a, b) => a + b, 0) * 5;
+  const empireTiles = id => Object.values(G.tiles).filter(t => t.owner === id);
+  const empireExplored = id => empireTiles(id).some(t => t.explored);
+
+  function declareWarInternal(id, why) {
+    const E = G.empires[id]; if (!E || E.status === 'war') return;
+    E.status = 'war'; E.trade = false; E.nap = false; E.pact = false; E.alliance = false;
+    E.tributesPlayer = false; E.playerTributes = false;
+    E.opinion = Math.min(E.opinion, -40);
+    E.timers.invade = ri(8, 14);
+    G.warExh = Math.min(20, (G.warExh || 0) + 2);
+    log(`⚔️ WAR with the ${D.EMPIRES[id].name}! (${why})`, 'bad');
+    emit('all');
+  }
+
+  function empiresTick() {
+    Object.entries(G.empires).forEach(([id, E]) => {
+      if (E.eliminated) return;
+      const meta = D.EMPIRES[id];
+      E.strength += 0.06 + (E.gold > 120 ? 0.04 : 0);      // recruit armies
+      E.gold += 1 + (E.trade ? 2 : 0);
+      // grow their cities
+      if (!meta.distant && G.day % 6 === 0) empireTiles(id).forEach(t => {
+        t.dl = Math.min(60, t.dl + 0.4);
+        if (t.dl >= 15 && !t.settled) t.settled = true;    // a new city rises
+      });
+      if (!meta.distant && --E.timers.expand <= 0) { E.timers.expand = ri(9, 16); empireExpand(id, E, meta); }
+      if (--E.timers.diplo <= 0) { E.timers.diplo = ri(16, 26) * (G.act >= 5 ? 0.6 : 1); empireDiplomacy(id, E, meta); }
+      if (E.status === 'war' && --E.timers.invade <= 0) { E.timers.invade = ri(10, 18); empireInvade(id, E, meta); }
+      // opinion drift
+      let drift = -Math.sign(E.opinion) * 0.02;
+      const friction = ownedTiles().filter(t => neighbors(t.key).some(n => n.owner === id)).length;
+      drift -= friction * 0.03;
+      if (E.trade) drift += 0.05;
+      if (E.alliance) drift += 0.06;
+      if (E.tributesPlayer) drift -= 0.02;
+      if (Object.values(G.fest).some(v => v > 0)) drift += 0.02;   // festivals impress envoys
+      E.opinion = clamp(E.opinion + drift, -100, 100);
+    });
+  }
+
+  function empireExpand(id, E, meta) {
+    const cands = [];
+    empireTiles(id).forEach(t => neighbors(t.key).forEach(n => {
+      if (meta.expandInto.includes(n.region) &&
+        (n.owner === 'neutral' || (n.owner === 'natives' && Math.random() < 0.6))) cands.push(n);
+    }));
+    if (!cands.length) return;
+    const t = cands[ri(0, cands.length - 1)];
+    t.owner = id; t.camp = false;
+    t.warriors = t.seat ? D.EMPIRE_SEAT_GARRISON : D.EMPIRE_TILE_GARRISON;
+    if (empireExplored(id)) log(`🏛️ The ${meta.name} claims ${tileName(t)}.`, '');
+    emit('tile');
+  }
+
+  function empireDiplomacy(id, E, meta) {
+    if (G.pendingDiplo || E.status === 'war') {
+      // wars: consider suing for peace when battered
+      if (E.status === 'war' && E.strength < meta.strength * 0.6 && !G.pendingDiplo)
+        G.pendingDiplo = { kind: 'offer_peace', empire: id };
+      if (G.pendingDiplo) emit('diplo');
+      return;
+    }
+    const pp = playerPower();
+    if (E.opinion < -25 && E.strength > pp * 1.2 && !E.tributesPlayer && !E.nap) {
+      G.pendingDiplo = { kind: 'demand', empire: id, gold: 60 };
+      emit('diplo');
+    } else if (meta.personality === 'merchant' && !E.trade && E.opinion >= 0) {
+      G.pendingDiplo = { kind: 'offer_trade', empire: id };
+      emit('diplo');
+    } else if (E.opinion > 30 && Math.random() < 0.3) {
+      G.res.gold += 15;
+      log(`🎁 The ${meta.name} sends gifts — the ${G.flag ? G.flag.dynasty : 'League'} is honored (+15 gold).`, 'good');
+    }
+  }
+
+  function empireInvade(id, E, meta) {
+    // frontline first: player tiles bordering the empire; else naval descent on a port
+    let targets = ownedTiles().filter(t => neighbors(t.key).some(n => n.owner === id));
+    if (!targets.length && E.navy >= 2) targets = ownedTiles().filter(t => t.port && t.settled);
+    if (!targets.length) return;
+    const t = targets[ri(0, targets.length - 1)];
+    const isStronghold = t.seat || t.fortress || t.buildings.includes('walls') || t.key === G.capital;
+    let atkPw = E.strength * rnd(0.8, 1.2);
+    let defPw = (forceStats(G.jobs.soldier).def * 0.85 + 4) * moraleMult();
+    defPw *= (1 + flagBonus('def') + G.bias.def + (G.tier >= 3 && hasTech('war3') ? 0.10 : 0));
+    if (t.buildings.includes('palisade')) defPw *= D.BUILDINGS.palisade.defMult;
+    if (isStronghold) atkPw *= 0.55;                       // sieges are hard
+    if (defPw >= atkPw) {
+      E.strength = Math.max(4, E.strength - 4);
+      setStatus('heroic', 4);
+      log(`🛡️ ${meta.name} ${isStronghold ? 'siege of' : 'invasion at'} ${tileName(t)} REPELLED!`, 'good');
+    } else if (t.key === G.capital) {
+      G.pop = Math.max(0, G.pop - Math.ceil(G.pop * 0.08));
+      G.warExh = Math.min(20, G.warExh + 4);
+      setStatus('fearful', 6);
+      log(`🔥 The ${meta.name} storms the walls of ${G.capitalName}! The city holds, at terrible cost.`, 'bad');
+    } else {
+      t.owner = id; t.warriors = D.EMPIRE_TILE_GARRISON; t.road = false;
+      killSoldiers(Math.min(G.jobs.soldier, 2));
+      G.warExh = Math.min(20, G.warExh + 3);
+      setStatus('fearful', 5);
+      log(`🔥 INVASION — the ${meta.name} seizes ${tileName(t)}! Retake it, or the frontline crumbles.`, 'bad');
+    }
+    emit('all');
+  }
+
+  // ---- player diplomacy ----
+  function canDiplo(id, action) {
+    const E = G.empires[id]; if (!E || E.eliminated || G.over) return false;
+    const a = D.DIPLO[action];
+    switch (action) {
+      case 'gift': return G.res.gold >= a.cost.gold && E.status !== 'war';
+      case 'exchange': return G.culture >= a.cost.culture && E.status !== 'war';
+      case 'trade': return !E.trade && E.status !== 'war' && E.opinion >= a.minOpinion;
+      case 'nap': return !E.nap && E.status !== 'war' && E.opinion >= a.minOpinion && G.res.gold >= a.cost.gold;
+      case 'pact': return !E.pact && E.nap && E.status !== 'war' && E.opinion >= a.minOpinion;
+      case 'alliance': return !E.alliance && E.trade && E.status !== 'war' && E.opinion >= a.minOpinion;
+      case 'threaten': return E.status !== 'war' && !E.tributesPlayer;
+      case 'war': return E.status !== 'war';
+      case 'peace': return E.status === 'war' && G.res.gold >= 80;
+      default: return false;
+    }
+  }
+  function diploAction(id, action) {
+    if (!canDiplo(id, action)) return false;
+    const E = G.empires[id], meta = D.EMPIRES[id], a = D.DIPLO[action];
+    if (action === 'gift') { G.res.gold -= a.cost.gold; E.opinion = clamp(E.opinion + a.opinion, -100, 100); log(`🎁 Gifts sent to the ${meta.name} (+${a.opinion} opinion).`, 'good'); }
+    else if (action === 'exchange') { G.culture -= a.cost.culture; E.opinion = clamp(E.opinion + a.opinion, -100, 100); log(`🎭 Poets & envoys exchanged with the ${meta.name} (+${a.opinion} opinion).`, 'good'); }
+    else if (action === 'trade') { E.trade = true; log(`⚖️ Trade agreement with the ${meta.name}: +2 gold/day each.`, 'good'); }
+    else if (action === 'nap') { G.res.gold -= a.cost.gold; E.nap = true; log(`🕊️ Non-aggression sworn with the ${meta.name}.`, 'good'); }
+    else if (action === 'pact') { E.pact = true; log(`🤝 Defensive pact with the ${meta.name} — they will answer if you are struck.`, 'good'); }
+    else if (action === 'alliance') { E.alliance = true; E.opinion = clamp(E.opinion + 10, -100, 100); log(`👑 ALLIANCE with the ${meta.name}!`, 'gold'); }
+    else if (action === 'threaten') {
+      if (playerPower() > E.strength * 1.3) { E.tributesPlayer = true; E.opinion -= 15; log(`🗡️ The ${meta.name} bows — 3 gold/day in tribute flows to ${G.capitalName}.`, 'gold'); }
+      else declareWarInternal(id, 'your insolent demand');
+    }
+    else if (action === 'war') declareWarInternal(id, 'your declaration');
+    else if (action === 'peace') {
+      G.res.gold -= 80; E.status = 'peace'; E.nap = true; E.opinion = clamp(E.opinion + 10, -100, 100);
+      log(`🏳️ Peace with the ${meta.name} (80 gold in reparations).`, 'good');
+    }
+    emit('all'); return true;
+  }
+  function resolveDiplo(accept) {
+    const p = G.pendingDiplo; if (!p) return false;
+    const E = G.empires[p.empire], meta = D.EMPIRES[p.empire];
+    if (p.kind === 'demand') {
+      if (accept) {
+        if (G.res.gold >= p.gold) { G.res.gold -= p.gold; E.opinion += 10; log(`💰 Paid ${p.gold} gold to appease the ${meta.name}.`, ''); }
+        else { E.playerTributes = true; log(`⛓️ You now pay tribute to the ${meta.name} (−3 gold/day, −stability).`, 'bad'); }
+      } else {
+        E.opinion -= 20;
+        if (Math.random() < 0.5) declareWarInternal(p.empire, 'your refusal to pay');
+        else log(`🗡️ The ${meta.name} seethes at your refusal.`, 'bad');
+      }
+    } else if (p.kind === 'offer_trade') {
+      if (accept) { E.trade = true; E.opinion += 8; log(`⚖️ Trade opened with the ${meta.name}: +2 gold/day each.`, 'good'); }
+      else E.opinion -= 5;
+    } else if (p.kind === 'offer_peace') {
+      if (accept) { E.status = 'peace'; E.nap = true; E.tributesPlayer = true; log(`🏳️ The ${meta.name} sues for peace and pays YOU tribute!`, 'gold'); }
+      else log(`⚔️ The war with the ${meta.name} grinds on.`, '');
+    }
+    G.pendingDiplo = null;
+    emit('all'); return true;
+  }
+
   // decrees
   function toggleFamilies() { G.decrees.families = !G.decrees.families; emit('all'); }
   function holdFestival() {
     const d = D.DECREES.festival;
-    if (G.over || G.decrees.festivalCd > 0 || G.res.food < d.cost.food || G.res.gold < d.cost.gold) return false;
-    G.res.food -= d.cost.food; G.res.gold -= d.cost.gold;
+    if (G.over || G.decrees.festivalCd > 0 || G.res.gold < d.cost.gold) return false;
+    G.res.gold -= d.cost.gold;
     G.decrees.festivalBoost = d.happyBoost; G.decrees.festivalCd = d.cooldown;
     log('🎉 A festival fills the streets — spirits soar!', 'good');
     emit('all'); return true;
@@ -1488,12 +1797,31 @@ window.Game = (function () {
       emit('act1');
     } else if (G.act === 2 && a.mainSeatsOwned === a.mainSeatsTotal && a.mainOwned >= a.mainTotal - 4) {
       G.act = 3;
-      log('👑 THE KINGDOM OF HELLAS — Greece is unified! The Naval branch opens: build ships and take the sea.', 'gold');
+      log('👑 ACT III — THE NAVAL AGE. Greece is unified! Build ships and take the sea.', 'gold');
       emit('act2');
-    } else if (G.act === 3 && !G.victory && a.greekSeatsOwned === a.greekSeatsTotal) {
+    } else if (G.act === 3 && G.navalTier >= 1 && G.tool >= 3) {
+      G.act = 4;
+      log('⛏️ ACT IV — THE MINERAL AGE. Iron tools and iron hulls: dig deep and sail far for lapis & obsidian.', 'gold');
+      emit('act4');
+    } else if (G.act === 4 && G.tier >= 3 && Object.values(G.tiles).filter(t => t.overseas && isMine(t)).length >= 3) {
+      G.act = 5;
+      log('👑 ACT V — THE EMPIRE AGE. The eight powers now treat you as an equal — or a threat. Tribute, alliances, war.', 'gold');
+      emit('act5');
+    }
+    // milestone: all Greek seats united (any act ≥3)
+    if (G.act >= 3 && !G.victory && a.greekSeatsOwned === a.greekSeatsTotal) {
       G.victory = true;
-      log('🏛️ HELLAS UNITED — every Greek seat from Kythira to Thrace flies your banner. The Empire Stage awaits (P5).', 'gold');
+      log('🏛️ HELLAS UNITED — every Greek seat from Kythira to Thrace flies your banner.', 'gold');
       emit('victory');
+    }
+    // Act V goal: Master of the Middle Sea (Phase 6 brings the 400-tile finale)
+    if (G.act >= 5 && !G.empireVictory) {
+      const rivals = Object.entries(G.empires).filter(([id, E]) => !D.EMPIRES[id].distant);
+      if (rivals.length && rivals.every(([id, E]) => E.eliminated || E.tributesPlayer || E.alliance)) {
+        G.empireVictory = true;
+        log('🌊 MASTER OF THE MIDDLE SEA — every nearby empire bows, pays, or marches beside you! (The 400-tile Mediterranean awaits in Phase 6.)', 'gold');
+        emit('victory5');
+      }
     }
   }
 
@@ -1507,7 +1835,7 @@ window.Game = (function () {
       log(`— ${season()}, Year ${G.year} —`, 'season');
       if (season() === 'Winter') log('❄ Winter: farms stall, foraging thins. Live on your stores.', '');
     }
-    produce(); popTick(); timersTick(); raidsTick(); researchTick(); checkTier(); checkVictory();
+    produce(); popTick(); timersTick(); raidsTick(); researchTick(); empiresTick(); checkTier(); checkVictory();
     emit('day');
   }
   function update(dtMs) {
@@ -1532,6 +1860,8 @@ window.Game = (function () {
       G.techs = G.techs || []; G.research = G.research || null;
       G.culture = G.culture || 0; G.act = G.act || (G.victory ? 2 : 1);
       G.fest = G.fest || { heroes: 0, forge: 0, sea: 0 }; G.festCd = G.festCd || {};
+      if (!G.empires) { log('⚠ Pre-Phase-5 save — start a new game to meet the eight empires.'); G.empires = {}; }
+      G._sust = G._sust || 0; G.warExh = G.warExh || 0; G.mapMode = G.mapMode || 'normal';
       emit('all'); log('📂 Game loaded.'); return true;
     } catch (e) { return false; }
   }
@@ -1550,7 +1880,7 @@ window.Game = (function () {
     newGame, update, skipDays, save, load, hasSave,
     get state() { return G; },
     neighbors, distFromCapital, roadConnected, tileName,
-    happiness, prodMult, popCap, foodCap, soldierCap, dailyFood, idle, assigned, countB, slots,
+    happiness, prodMult, popCap, soldierCap, idle, assigned, countB, slots,
     canScout, scout, canClaim, claim, claimCost, canColonize, colonize,
     canBuild, build, canRoad, road, canRecruit, recruit,
     canAttack, attack, canAbsorb, absorb,
@@ -1564,6 +1894,10 @@ window.Game = (function () {
     // Phase 4 API
     hasTech, canResearch, setResearch, rpPerDay, culturePerDay,
     canFest, holdFest, actInfo,
+    // Phase 5 API
+    stability, coverage, sustenance, playerPower, warsActive,
+    canDiplo, diploAction, resolveDiplo,
+    setMapMode: m => { if (G && D.MAP_MODES.includes(m)) { G.mapMode = m; emit('mode'); } },
     season: () => G ? C.SEASONS[G.seasonIx] : 'Spring',
     setSpeed: s => { if (G) { G.speed = s; emit('hud'); } },
   };
@@ -1633,18 +1967,43 @@ window.MapView = (function () {
 
   // a tile is "on the map" (drawn as land) vs "beyond the horizon" (silhouette)
   const visible = t => !t.overseas || Game.overseasReachable(t);
+  const mode = () => (Game.state && Game.state.mapMode) || 'normal';
+  const ownerMeta = o => D.EMPIRES[o] || D.FACTIONS[o] || null;
+  // population density 1..8 for the POPULATION map mode
+  function density(t) {
+    if (!t.explored) return 0;
+    let d = 1;
+    if (t.owner !== 'neutral') d += 1;
+    if (t.settled) d += 2 + Math.floor(t.dl / 12);
+    if (t.seat) d += 1;
+    if (Game.state && t.key === Game.state.capital) d += 2;
+    return Math.max(1, Math.min(8, d));
+  }
+  // sea-zone labels for political & naval modes [text, col, row]
+  const SEA_LABELS = [['AEGEAN SEA', 21.5, 6.5], ['IONIAN SEA', 9.5, 8.5], ['SEA OF CRETE', 19, 15.5],
+    ['ADRIATIC SEA', 7.5, 3.2], ['TYRRHENIAN', 2.5, 9.5]];
 
   function draw() {
     if (!ctx) return;
     const G = Game.state;
     const S = C.TILE;
 
-    // ---- the sea ----
-    const grad = ctx.createLinearGradient(0, 0, cv.width, cv.height);
-    grad.addColorStop(0, '#4a7fa5'); grad.addColorStop(0.5, '#3a6b91');
-    grad.addColorStop(1, '#2c567a');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, cv.width, cv.height);
+    // ---- the sea (palette shifts by map mode) ----
+    const M = mode();
+    if (M === 'political') {
+      ctx.fillStyle = D.POLITICAL.sea;                      // the reference-atlas cyan
+      ctx.fillRect(0, 0, cv.width, cv.height);
+    } else if (M === 'naval') {
+      const g2 = ctx.createLinearGradient(0, 0, cv.width, cv.height);
+      g2.addColorStop(0, '#2e6f9e'); g2.addColorStop(1, '#123a5e');
+      ctx.fillStyle = g2; ctx.fillRect(0, 0, cv.width, cv.height);
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, cv.width, cv.height);
+      grad.addColorStop(0, '#4a7fa5'); grad.addColorStop(0.5, '#3a6b91');
+      grad.addColorStop(1, '#2c567a');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, cv.width, cv.height);
+    }
     ctx.strokeStyle = 'rgba(255,255,255,.045)';
     for (let i = 0; i < 22; i++) {
       ctx.beginPath();
@@ -1666,17 +2025,36 @@ window.MapView = (function () {
     ctx.fillStyle = 'rgba(150,200,220,.30)';
     vis.forEach(t => ctx.fillRect(px(t) - 4, py(t) - 4, S + 8, S + 8));
 
-    // ---- land fill (region colour, terrain-shaded; fog = unknown dark land) ----
+    // ---- land fill (per map mode; fog = unknown dark land) ----
     vis.forEach(t => {
       const x = px(t), y = py(t);
       if (!t.explored) {
-        ctx.fillStyle = '#2b333f';
+        ctx.fillStyle = M === 'political' ? '#b8a86a' : '#2b333f';
+        ctx.fillRect(x, y, S, S);
+        return;
+      }
+      if (M === 'political') {               // the user's reference atlas: tan land, faction colour bands
+        const em = D.EMPIRES[t.owner];
+        ctx.fillStyle = t.owner === 'player' ? D.POLITICAL.player
+          : em ? em.col
+          : D.FACTIONS[t.owner] ? shade(D.POLITICAL.land, -0.18)
+          : D.POLITICAL.land;
+        ctx.fillRect(x, y, S, S);
+      } else if (M === 'population') {
+        const d = density(t);
+        ctx.fillStyle = D.POP_COLORS[d - 1];
+        ctx.fillRect(x, y, S, S);
+      } else if (M === 'resource') {
+        ctx.fillStyle = shade('#b8b0a0', TERR_SHADE[t.terrain] || 0);
+        ctx.fillRect(x, y, S, S);
+      } else if (M === 'naval') {
+        ctx.fillStyle = t.coastal ? '#c9c2a8' : '#8a8878';
         ctx.fillRect(x, y, S, S);
       } else {
         const base = RCOL[t.region] || '#c0b070';
         ctx.fillStyle = shade(base, TERR_SHADE[t.terrain] || 0);
         ctx.fillRect(x, y, S, S);
-        if (t.owner !== 'player') {          // unowned/enemy: slight wash
+        if (t.owner !== 'player') {
           ctx.fillStyle = 'rgba(20,26,36,.18)';
           ctx.fillRect(x, y, S, S);
         }
@@ -1709,8 +2087,10 @@ window.MapView = (function () {
       [[1, 0, x + S, y, x + S, y + S], [-1, 0, x, y, x, y + S],
        [0, 1, x, y + S, x + S, y + S], [0, -1, x, y, x + S, y]].forEach(([dc, dr, x1, y1, x2, y2]) => {
         const n = G.tiles[(t.c + dc) + ',' + (t.r + dr)];
-        if (!n || !visible(n)) {              // COAST
-          ctx.strokeStyle = '#233246'; ctx.lineWidth = 2.6;
+        if (!n || !visible(n)) {              // COAST (double stroke: ink + light inner)
+          ctx.strokeStyle = M === 'political' ? '#7a5c14' : '#233246'; ctx.lineWidth = 2.6;
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+          ctx.strokeStyle = 'rgba(255,252,235,.35)'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
         } else if (n.region !== t.region && t.explored && n.explored && (dc === 1 || dr === 1)) {
           ctx.strokeStyle = 'rgba(35,35,30,.55)'; ctx.lineWidth = 1.4;
@@ -1719,20 +2099,37 @@ window.MapView = (function () {
       });
     });
 
-    // ---- ownership tint borders ----
+    // ---- ownership borders (empires solid, tribes dashed, player gold) ----
     vis.forEach(t => {
       const x = px(t), y = py(t);
       if (!t.explored) return;
+      const em = D.EMPIRES[t.owner];
       if (t.owner === 'player') {
-        ctx.strokeStyle = '#f4c400'; ctx.lineWidth = 2.2;
+        ctx.strokeStyle = '#f4c400'; ctx.lineWidth = M === 'political' ? 2.8 : 2.2;
+        ctx.strokeRect(x + 1.5, y + 1.5, S - 3, S - 3);
+      } else if (em) {
+        ctx.strokeStyle = shade(em.col, -0.35); ctx.lineWidth = M === 'political' ? 2.4 : 2;
         ctx.strokeRect(x + 1.5, y + 1.5, S - 3, S - 3);
       } else if (t.owner !== 'neutral') {
-        ctx.strokeStyle = D.FACTIONS[t.owner].col; ctx.lineWidth = 1.8;
+        ctx.strokeStyle = (D.FACTIONS[t.owner] || {}).col || '#888'; ctx.lineWidth = 1.8;
         ctx.setLineDash([4, 3]);
         ctx.strokeRect(x + 1.5, y + 1.5, S - 3, S - 3);
         ctx.setLineDash([]);
       }
     });
+
+    // ---- capital glow (gold halo; brighter while a grand festival runs) ----
+    const capT = G.tiles[G.capital];
+    if (capT && visible(capT)) {
+      const cx0 = px(capT) + S / 2, cy0 = py(capT) + S / 2;
+      const fest = Object.values(G.fest || {}).some(v => v > 0);
+      const rg = ctx.createRadialGradient(cx0, cy0, 4, cx0, cy0, S * (fest ? 1.5 : 1.05));
+      rg.addColorStop(0, fest ? 'rgba(255,215,64,.5)' : 'rgba(244,196,0,.35)');
+      rg.addColorStop(1, 'rgba(244,196,0,0)');
+      ctx.fillStyle = rg;
+      ctx.fillRect(cx0 - S * 2, cy0 - S * 2, S * 4, S * 4);
+      if (fest) { ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🎉', cx0 + S / 2, cy0 - S / 2); }
+    }
 
     // ---- per-tile icons & marks ----
     ctx.textAlign = 'center';
@@ -1747,11 +2144,29 @@ window.MapView = (function () {
         }
         return;
       }
-      // terrain glyphs (subtle, atlas-style)
-      ctx.fillStyle = 'rgba(30,30,20,.5)'; ctx.font = '10px sans-serif';
-      if (t.terrain === 'mtn') ctx.fillText('▲', x + S / 2, y + S / 2 + 3);
-      else if (t.terrain === 'hills') ctx.fillText('◠', x + S / 2, y + S / 2 + 3);
-      else if (t.terrain === 'forest') { ctx.fillStyle = 'rgba(0,45,0,.5)'; ctx.fillText('♣', x + S / 2, y + S / 2 + 3); }
+      // terrain glyphs (subtle, atlas-style; hidden on thematic modes)
+      if (M === 'normal' || M === 'resource') {
+        ctx.fillStyle = 'rgba(30,30,20,.5)'; ctx.font = '10px sans-serif';
+        if (t.terrain === 'mtn') ctx.fillText('▲', x + S / 2, y + S / 2 + 3);
+        else if (t.terrain === 'hills') ctx.fillText('◠', x + S / 2, y + S / 2 + 3);
+        else if (t.terrain === 'forest') { ctx.fillStyle = 'rgba(0,45,0,.5)'; ctx.fillText('♣', x + S / 2, y + S / 2 + 3); }
+      }
+      // empire garrisons & their capital crests
+      const em2 = D.EMPIRES[t.owner];
+      if (em2) {
+        if (t.seat) {
+          const E2 = G.empires[t.owner];
+          const im2 = E2 && flagImgs[E2.flag];
+          if (im2 && im2.complete && im2.naturalWidth) {
+            ctx.drawImage(im2, x + S - 16, y + 2, 14, 9);
+            ctx.strokeStyle = '#222'; ctx.lineWidth = 1; ctx.strokeRect(x + S - 16, y + 2, 14, 9);
+          }
+          ctx.font = '12px sans-serif'; ctx.fillText('👑', x + 8, y + 12);
+        } else if (M !== 'population') {
+          ctx.font = '9px sans-serif'; ctx.fillStyle = shade(em2.col, -0.45);
+          ctx.fillText('⚔', x + S - 8, y + 12);
+        }
+      }
       // settlement / camp icons on top
       ctx.font = '13px sans-serif';
       if (t.key === G.capital) { ctx.font = '16px sans-serif'; ctx.fillText('🏛️', x + S / 2, y + S / 2 + 4); }
@@ -1765,14 +2180,27 @@ window.MapView = (function () {
       if (t.port) { ctx.fillStyle = '#1a3a5a'; ctx.fillText('⚓', x + 7, y + S - 4); }
       if (t.owner !== 'player' && t.danger >= 3) { ctx.fillStyle = '#7a1a10'; ctx.fillText('☠', x + S - 7, y + 10); }
       if (t.volcanic || (t.hazards && t.hazards.length)) { ctx.font = '10px sans-serif'; ctx.fillText('🌋', x + S / 2 - 8, y + 11); }
-      // ore dots
-      if (t.ores && t.ores.length) {
+      // ore dots (bold on the RESOURCE map)
+      if (t.ores && t.ores.length && M !== 'population' && M !== 'political') {
+        const big = M === 'resource';
         t.ores.forEach((o, i) => {
           const od = D.ORES[o]; if (!od) return;
           ctx.fillStyle = od.dot;
-          ctx.beginPath(); ctx.arc(x + S - 7 - i * 7, y + S - 7, 2.8, 0, 7); ctx.fill();
-          ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = .7; ctx.stroke();
+          ctx.beginPath(); ctx.arc(x + S - (big ? 9 : 7) - i * (big ? 10 : 7), y + S - (big ? 9 : 7), big ? 4.5 : 2.8, 0, 7); ctx.fill();
+          ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = big ? 1.2 : .7; ctx.stroke();
         });
+      }
+      // population mode: capitals ring in gold, density number
+      if (M === 'population' && t.explored) {
+        if (t.key === G.capital || (t.seat && D.EMPIRES[t.owner])) {
+          ctx.strokeStyle = '#f4c400'; ctx.lineWidth = 2.6;
+          ctx.strokeRect(x + 1.5, y + 1.5, S - 3, S - 3);
+        }
+      }
+      // naval mode: ports glow
+      if (M === 'naval' && t.port && t.explored) {
+        ctx.strokeStyle = t.owner === 'player' ? '#ffe066' : '#9ad1ff'; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.arc(x + S / 2, y + S / 2, S * 0.42, 0, 7); ctx.stroke();
       }
       // building pips
       if (t.owner === 'player' && t.buildings.length > 1) {
@@ -1821,6 +2249,17 @@ window.MapView = (function () {
       ctx.fillStyle = 'rgba(30,25,15,.95)';
       ctx.fillText(label, lx, ly);
     });
+
+    // ---- sea-zone labels (political & naval modes) ----
+    if (M === 'political' || M === 'naval') {
+      ctx.font = 'italic 700 10px Georgia, serif';
+      ctx.textAlign = 'center';
+      SEA_LABELS.forEach(([txt, c, r]) => {
+        const lx = 10 + c * S, ly = 10 + r * S;
+        ctx.fillStyle = M === 'political' ? 'rgba(20,60,80,.65)' : 'rgba(200,230,255,.55)';
+        ctx.fillText(txt, lx, ly);
+      });
+    }
 
     // ---- hover & selection ----
     const hov = G.tiles[hoverKey];
@@ -1874,7 +2313,7 @@ window.UI = (function () {
   function on(ev) {
     if (!Game.state) return;
     if (ev === 'log') paintLog();
-    else if (ev === 'day') { paintHUD(); paintLog(); MapView.draw(); paintTilePanel(); paintPop(); paintIndustry(); }
+    else if (ev === 'day') { paintHUD(); paintLog(); MapView.draw(); paintTilePanel(); paintPop(); paintIndustry(); paintDiplo(); }
     else if (ev === 'pop') { paintPop(); paintHUD(); paintIndustry(); }
     else if (ev === 'hud') paintSpeed();
     else if (ev === 'tile') { MapView.draw(); paintTilePanel(); }
@@ -1882,11 +2321,16 @@ window.UI = (function () {
     else if (ev === 'tier3') showTier3();
     else if (ev === 'act1') showAct1();
     else if (ev === 'act2') showAct2();
+    else if (ev === 'act4') showAct4();
+    else if (ev === 'act5') showAct5();
+    else if (ev === 'victory5') showVictory5();
+    else if (ev === 'diplo') showDiploEvent();
+    else if (ev === 'mode') { paintModes(); MapView.draw(); }
     else if (ev === 'victory') showVictory();
     else if (ev === 'defeat') showDefeat();
     else paintAll();
   }
-  function paintAll() { paintHUD(); paintPop(); paintDecrees(); paintIndustry(); paintLog(); paintTilePanel(); paintSpeed(); MapView.draw(); }
+  function paintAll() { paintHUD(); paintPop(); paintDecrees(); paintIndustry(); paintDiplo(); paintModes(); paintLog(); paintTilePanel(); paintSpeed(); MapView.draw(); }
   function ingotSummary(R) {
     return ['copper', 'bronze', 'iron', 'lapis', 'obsidian'].filter(m => (R[m] || 0) >= 1)
       .map(m => `${ICON[m]}${Math.floor(R[m])}`).join(' ');
@@ -1914,7 +2358,7 @@ window.UI = (function () {
     let trade = `<div class="isec"><b>🐫 Trade</b> `;
     if (Game.countB('resource_market') > 0) {
       trade += `<span class="dim">sell ×10:</span> `;
-      ['wood', 'stone', 'copper', 'iron', 'food'].forEach(r =>
+      ['wood', 'stone', 'copper', 'iron', 'gold' === 'never' ? 'x' : 'bronze'].forEach(r =>
         trade += `<button class="mini" onclick="Game.marketSell('${r}',10)" ${(R[r] || 0) >= 10 ? '' : 'disabled'} title="+${(10 * C.MARKET_SELL)}🪙">${ICON[r]}</button>`);
     } else trade += `<span class="dim">build a Resource Market & Trade Depots.</span>`;
     trade += `</div>`;
@@ -1964,17 +2408,50 @@ window.UI = (function () {
       <span class="dim">(+${Game.culturePerDay().toFixed(1)}/d)</span></h3>${head}${branches}`;
   }
 
+  // ---------- Phase 5: map mode buttons ----------
+  const MODE_META = { normal: ['🗺️', 'Normal'], political: ['👑', 'Political'], population: ['👥', 'Population'], resource: ['⛏️', 'Resource'], naval: ['⚓', 'Naval'] };
+  function paintModes() {
+    const G = Game.state; if (!G || !$('mapModes')) return;
+    $('mapModes').innerHTML = D.MAP_MODES.map(m =>
+      `<button class="mode ${G.mapMode === m ? 'on' : ''}" onclick="Game.setMapMode('${m}')" title="${MODE_META[m][1]} map">${MODE_META[m][0]} ${MODE_META[m][1]}</button>`).join('');
+  }
+
+  // ---------- Phase 5: diplomacy panel ----------
+  function paintDiplo() {
+    const G = Game.state; if (!G || !$('diploPanel')) return;
+    if (!G.empires || !Object.keys(G.empires).length) { $('diploPanel').innerHTML = ''; return; }
+    const rows = Object.entries(G.empires).map(([id, E]) => {
+      const meta = D.EMPIRES[id];
+      if (E.eliminated) return `<div class="isec dim"><b style="color:${meta.col}">■</b> ${meta.name} — <s>fallen</s></div>`;
+      const st = E.status === 'war' ? '<span class="warn">⚔️ WAR</span>'
+        : E.alliance ? '👑 Allied' : E.pact ? '🤝 Pact' : E.trade ? '⚖️ Trade' : E.nap ? '🕊️ NAP' : 'Peace';
+      const op = Math.round(E.opinion);
+      const opPct = Math.round((op + 100) / 2);
+      const trib = E.tributesPlayer ? ' · <span class="good">pays YOU</span>' : E.playerTributes ? ' · <span class="warn">you pay them</span>' : '';
+      const btns = Object.keys(D.DIPLO).map(a =>
+        `<button class="mini" onclick="Game.diploAction('${id}','${a}')" ${Game.canDiplo(id, a) ? '' : 'disabled'} title="${D.DIPLO[a].tip}">${D.DIPLO[a].icon}</button>`).join('');
+      return `<div class="isec">
+        <b style="color:${meta.col}">■</b> <b>${meta.name}</b> ${meta.distant ? '<span class="dim">(distant)</span>' : ''} — ${st}${trib}
+        <div class="obar" title="opinion ${op}"><div class="ofill" style="width:${opPct}%"></div></div>
+        <span class="dim">⚔ ${Math.round(E.strength)} vs yours ${Math.round(Game.playerPower())} · ⚓ navy ${E.navy}</span>
+        <div class="army">${btns}</div>
+      </div>`;
+    }).join('');
+    $('diploPanel').innerHTML = `<h3 class="phead">🕊️ Diplomacy — the Eight Powers</h3>${rows}`;
+  }
+
   // ---------- HUD ----------
   function paintHUD() {
     const G = Game.state, R = G.res;
     const h = Game.happiness();
-    const buffer = (R.food / Math.max(1, Game.dailyFood())).toFixed(1);
-    const realm = G.act >= 3 ? 'Kingdom of Hellas' : G.act === 2 ? 'The Peloponnesian League' : 'Chiefdom of the Morea';
+    const stab = Game.stability(), cov = Math.round(Game.coverage() * 100);
+    const realm = G.act >= 5 ? 'The Empire of Hellas' : G.act >= 3 ? 'Kingdom of Hellas' : G.act === 2 ? 'The Peloponnesian League' : 'Chiefdom of the Morea';
     $('hudTitle').innerHTML =
       `${G.flag ? `<img class="hudflag" src="${G.flag.png}" ${G.tier >= 3 ? 'style="outline:2px solid #7a3aa8"' : ''}>` : '⚑'} <b>${G.capitalName}</b>
        <span class="dim">· ${D.TIER_NAMES[G.tier]} (T${G.tier}) · ${realm}${G.flag ? ` · ${G.flag.dynasty}` : ''}</span>`;
     $('hudStats').innerHTML = [
-      st('🍖', Math.floor(R.food) + `<i>/${Game.foodCap()}</i>`, `Food (buffer ${buffer} days)`, R.food < Game.dailyFood() * 3 ? 'warn' : ''),
+      st('🛡️', stab + '%', `STABILITY — drives growth, morale, diplomacy & rebellion (${Game.warsActive()} wars)`, stab < 30 ? 'warn' : stab >= 70 ? 'good' : ''),
+      st('🌾', cov + '%', 'Sustenance coverage (farms, lodges, foragers vs. population)', cov < 80 ? 'warn' : ''),
       st('😊', h + '%', 'Happiness', h < 30 ? 'warn' : h >= 75 ? 'good' : ''),
       st('👥', Math.floor(G.pop) + `<i>/${Game.popCap()}</i>`, 'Population / capacity'),
       st('🪵', Math.floor(R.wood), 'Wood'),
@@ -1994,8 +2471,12 @@ window.UI = (function () {
       : G.act === 2
       ? `ACT II ⚑ ${a.mainOwned}/${a.mainTotal} mainland · ★ ${a.mainSeatsOwned}/${a.mainSeatsTotal}
          <span class="dim">— unify Greece to open the sea</span>`
-      : `ACT III ★ ${a.greekSeatsOwned}/${a.greekSeatsTotal} Greek seats
-         <span class="dim">— take the isles; the Empire Stage awaits</span>`;
+      : G.act === 3
+      ? `ACT III ★ ${a.greekSeatsOwned}/${a.greekSeatsTotal} Greek seats
+         <span class="dim">— iron tools + iron hulls open the Mineral Age</span>`
+      : G.act === 4
+      ? `ACT IV <span class="dim">— hold 3 overseas tiles at a Grand Capital (T3) → the EMPIRE AGE</span>`
+      : `ACT V <span class="dim">— make every nearby empire bow, pay or ally → Master of the Middle Sea (400-tile world: Phase 6)</span>`;
   }
   const st = (ic, v, tip, cls) => `<span class="stat ${cls || ''}" title="${tip}">${ic} ${v}</span>`;
   function paintSpeed() {
@@ -2018,7 +2499,7 @@ window.UI = (function () {
       const [ic, nm, tip] = JOB_META[j];
       const ctl = j === 'soldier'
         ? `<button class="mini" onclick="Game.jobRemove('soldier',1)">−</button>
-           <button class="mini" onclick="Game.recruit()" ${Game.canRecruit() ? '' : 'disabled'} title="20🍖 5🪵 (+1⛓️ if available)">recruit</button>`
+           <button class="mini" onclick="Game.recruit()" ${Game.canRecruit() ? '' : 'disabled'} title="10🪵 3🪙 at the Barracks">recruit</button>`
         : `<button class="mini" onclick="Game.jobRemove('${j}',1)">−</button>
            <button class="mini" onclick="Game.jobAdd('${j}',1)">+</button>
            <button class="mini" onclick="Game.jobAdd('${j}',5)">+5</button>`;
@@ -2090,12 +2571,14 @@ window.UI = (function () {
       return;
     }
     const own = t.owner === 'player';
-    const fac = (t.owner !== 'player' && t.owner !== 'neutral') ? D.FACTIONS[t.owner] : null;
+    const emp = D.EMPIRES[t.owner] ? Game.state.empires[t.owner] : null;
+    const empMeta = D.EMPIRES[t.owner] || null;
+    const fac = (!emp && t.owner !== 'player' && t.owner !== 'neutral') ? D.FACTIONS[t.owner] : null;
     let html = `<h3>${Game.tileName(t)} ${t.seat ? '★' : ''}${t.sacred ? '✦' : ''}</h3>
       <div class="kv"><span>Region</span><b>${t.regionName}</b></div>
       <div class="kv"><span>Terrain</span><b>${D.TERRAIN[t.terrain].name}${t.coastal ? ' · coast' : ''}${t.port ? ' ⚓port' : ''}${t.ore ? ' · ⛏ore' : ''}${t.rich ? ' (rich!)' : ''}</b></div>
       <div class="kv"><span>Danger</span><b>${'☠'.repeat(t.danger) || '—'}</b></div>
-      <div class="kv"><span>Owner</span><b>${own ? '⚑ You' : fac ? `${fac.icon} ${fac.name}` : 'Unclaimed'}</b></div>
+      <div class="kv"><span>Owner</span><b>${own ? '⚑ You' : empMeta ? `<span style="color:${empMeta.col}">■</span> ${empMeta.name}` : fac ? `${fac.icon} ${fac.name}` : 'Unclaimed'}</b></div>
       <div class="kv"><span>Riches</span><b class="dim">${t.res}</b></div>`;
     if (t.ores && t.ores.length) {
       html += `<div class="kv"><span>Ores</span><b>${t.ores.map(o => {
@@ -2106,6 +2589,10 @@ window.UI = (function () {
     if (t.hazards && t.hazards.length) html += `<div class="kv"><span>Hazards</span><b class="warn">${t.volcanic ? '🌋 ' : ''}${t.hazards.join(' · ')}</b></div>`;
     if (fac) html += `<div class="pad dim">"${fac.flavor}"</div>
       <div class="kv"><span>Warriors</span><b>${t.warriors}${t.camp ? ' (camp)' : ''}${t.fortress ? ' 🏰' : ''}</b></div>`;
+    if (empMeta) html += `<div class="pad dim">"${empMeta.tip}"</div>
+      <div class="kv"><span>Garrison</span><b>${t.warriors}${t.fortress || t.seat ? ' 🏰' : ''}</b></div>
+      <div class="kv"><span>Relations</span><b>${emp.status === 'war' ? '⚔️ AT WAR' : emp.alliance ? '👑 Allied' : emp.trade ? '⚖️ Trading' : emp.nap ? '🕊️ Pact' : 'Peace'} · opinion ${Math.round(emp.opinion)}</b></div>
+      <div class="dim pad">Attacking will mean WAR. Manage relations in the Diplomacy panel →</div>`;
 
     if (own) {
       html += `<div class="kv"><span>Development</span><b>DL ${Math.floor(t.dl)} · ${dlBand(t.dl)}</b></div>`;
@@ -2117,7 +2604,7 @@ window.UI = (function () {
         html += buildMenu(t);
       } else {
         html += `<button class="act" onclick="UI.act('colonize')" ${Game.canColonize(t) ? '' : 'disabled'}
-          title="${C.COLONIZE_POP} settlers + ${C.COLONIZE_WOOD}🪵 ${C.COLONIZE_FOOD}🍖">🏛️ Colonize (${C.COLONIZE_POP}👥 ${C.COLONIZE_WOOD}🪵 ${C.COLONIZE_FOOD}🍖)</button>`;
+          title="${C.COLONIZE_POP} settlers + ${C.COLONIZE_WOOD}🪵">🏛️ Colonize (${C.COLONIZE_POP}👥 ${C.COLONIZE_WOOD}🪵)</button>`;
       }
       if (!t.road) html += `<button class="act" onclick="UI.act('road')" ${Game.canRoad(t) ? '' : 'disabled'}
         title="Connects to the capital network: +25% output, banners, supply">🛤️ Road (${C.ROAD_STONE}🪨)</button>`;
@@ -2241,6 +2728,53 @@ window.UI = (function () {
       <div class="vstats">Year ${G.year} · Population ${Math.floor(G.pop)} · Tier ${G.tier} ·
         Techs ${G.techs.length}/${D.TECHS.length} · Battles ${s.battlesWon}W/${s.battlesLost}L</div>
       <button class="act" onclick="UI.closeModalV()">Continue ruling (sandbox)</button>`);
+  }
+  function showAct4() {
+    modal(`<h2>⛏️ ACT IV — THE MINERAL AGE</h2>
+      <p>Iron tools bite deeper; iron hulls sail farther. <b>Lapis and obsidian</b> wait in
+      Mani's burning shafts, on Delos, in Iberia's shadowed hills — the metals that will arm
+      your empire.</p>
+      <p class="dim">Reach a Grand Capital (T3) and hold 3 overseas tiles to enter the Empire Age.</p>
+      <button class="act" onclick="UI.closeModal2()">Dig deep (continue)</button>`);
+  }
+  function showAct5() {
+    modal(`<h2>👑 ACT V — THE EMPIRE AGE</h2>
+      <p>The eight powers now treat ${Game.state.capitalName} as a rival throne. Envoys arrive
+      with demands; fleets probe your ports. <b>Tribute, alliances, blockades, invasions</b> —
+      the games of empires begin.</p>
+      <p><b>Goal:</b> every nearby empire must bow (tribute), march beside you (alliance), or fall.</p>
+      <p class="dim">Beyond it: Phase 6 — the volcano, adamantine, and the FULL 400-tile Mediterranean.</p>
+      <button class="act" onclick="UI.closeModal2()">Let them come</button>`);
+  }
+  function showVictory5() {
+    const G = Game.state;
+    modal(`<h2>🌊 MASTER OF THE MIDDLE SEA</h2>
+      <p><b>Every nearby empire bows, pays, or marches beside the ${G.flag ? G.flag.dynasty : 'League'}.</b>
+      From the Peloponnese to Sicily and the Anatolian shore, the sea answers to ${G.capitalName}.</p>
+      <p class="dim">The finale awaits in Phase 6: the volcano's adamantine heart and the full
+      400-tile Mediterranean — Carthage, Kemet, Gaul, Mesopotamia.</p>
+      <button class="act" onclick="UI.closeModal2()">Rule on (sandbox)</button>`);
+  }
+  function showDiploEvent() {
+    const G = Game.state, p = G.pendingDiplo; if (!p) return;
+    const meta = D.EMPIRES[p.empire];
+    if (p.kind === 'demand') {
+      modal(`<h2 style="color:${meta.col}">🗡️ An ultimatum from the ${meta.name}</h2>
+        <p>"${G.capitalName} grows fat. Pay <b>${p.gold} gold</b> — or feed our soldiers instead."</p>
+        <p class="dim">Refusing risks war. Paying without gold makes you their tributary.</p>
+        <button class="act" onclick="Game.resolveDiplo(true);UI.closeModal2()">💰 Pay them</button>
+        <button class="act warlike" onclick="Game.resolveDiplo(false);UI.closeModal2()">🗡️ Refuse — let them try</button>`);
+    } else if (p.kind === 'offer_trade') {
+      modal(`<h2 style="color:${meta.col}">⚖️ Envoys of the ${meta.name}</h2>
+        <p>"Our ships are heavy with goods. Open your ports — <b>+2 gold/day for us both</b>."</p>
+        <button class="act" onclick="Game.resolveDiplo(true);UI.closeModal2()">⚖️ Accept the trade</button>
+        <button class="act" onclick="Game.resolveDiplo(false);UI.closeModal2()">Decline</button>`);
+    } else if (p.kind === 'offer_peace') {
+      modal(`<h2 style="color:${meta.col}">🏳️ The ${meta.name} sues for peace</h2>
+        <p>Bloodied and weary, they offer peace — <b>and tribute to YOU</b>.</p>
+        <button class="act" onclick="Game.resolveDiplo(true);UI.closeModal2()">🏳️ Accept their submission</button>
+        <button class="act warlike" onclick="Game.resolveDiplo(false);UI.closeModal2()">⚔️ Fight on</button>`);
+    }
   }
   function closeModal2() { closeModal(); paintAll(); }
   function closeModalV() { Game.state.victory = 'shown'; closeModal(); }

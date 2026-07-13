@@ -146,3 +146,11 @@ button { font: inherit; }
   #left { min-height: 380px; }
   #right { width: 100%; border-left: none; border-top: 2px solid var(--line); }
 }
+
+/* Phase 5: map modes + diplomacy */
+#mapModes { display: flex; gap: 6px; flex-wrap: wrap; padding-bottom: 6px; }
+.mode { background: var(--panel2); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 7px; padding: 3px 10px; cursor: pointer; font-size: 12px; }
+.mode.on { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+.obar { height: 6px; background: var(--panel2); border-radius: 3px; overflow: hidden; margin: 3px 0; }
+.ofill { height: 100%; background: linear-gradient(90deg, #c0392b, #d8c84e 50%, #7fd48a); }

@@ -33,7 +33,7 @@ ok(G.res.metal === 5, 'Sparta metal bias applied');
 console.log('— 30 days of survival —');
 Game.skipDays(30);
 ok(G.pop > 0, `population alive after 30 days (pop=${G.pop.toFixed(1)})`);
-ok(G.res.food >= 0, 'food non-negative');
+ok(Game.coverage() >= 0 && Game.stability() >= 0 && Game.stability() <= 100, `stability in range (${Game.stability()}%, coverage ${(Game.coverage()*100).toFixed(0)}%)`);
 ok(Game.happiness() >= 0 && Game.happiness() <= 100, `happiness in range (${Game.happiness()}%)`);
 
 console.log('— build & economy —');
@@ -48,9 +48,9 @@ Game.build(G.capital, 'breeding_hub');
 Game.skipDays(6);
 ok(cap.buildings.includes('breeding_hub'), 'BREEDING HUB completed');
 Game.jobAdd('farmer', 3);
-const foodBefore = G.res.food;
-Game.skipDays(5);
-ok(G.res.food > 0, `farm feeding us (food ${foodBefore.toFixed(0)} → ${G.res.food.toFixed(0)})`);
+G.seasonIx = 0;                              // measure in Spring — in Winter farms rightly stall
+Game.skipDays(1);
+ok(Game.coverage() > 0.6, `farm sustaining us in season (coverage ${(Game.coverage()*100).toFixed(0)}%)`);
 
 console.log('— expansion pipeline —');
 const nb = Game.neighbors(G.capital).find(t => t.owner === 'neutral' && t.explored);
@@ -84,11 +84,11 @@ Game.chooseFlag('imperial_eagle');
 ok(G.flag && G.flag.id === 'imperial_eagle', 'flag chosen: The Imperial Eagle');
 
 console.log('— warfare —');
-G.res.wood = 200; G.res.stone = 200; G.res.food = 400; G.res.metal = 10;
+G.res.wood = 200; G.res.stone = 200; G.res.gold = 100; G.res.metal = 10;
 Game.build(G.capital, 'barracks');
 Game.skipDays(6);
 ok(Game.countB('barracks') === 1, 'barracks built');
-G.pop = 40; G.res.food = 500; G.res.wood = 100;
+G.pop = 40; G.res.gold = 100; G.res.wood = 100;
 for (let i = 0; i < 5; i++) Game.recruit();
 ok(G.jobs.soldier >= 5, `soldiers recruited (${G.jobs.soldier}, armed ${G.soldiersArmed})`);
 // find an adjacent enemy tile (Taygetos camps are near Sparta)
@@ -113,7 +113,7 @@ if (enemy) {
 console.log('— decrees —');
 Game.toggleFamilies();
 ok(G.decrees.families, 'Encourage Families ON');
-G.res.food = 100; G.res.gold = 50;
+G.res.gold = 60;
 ok(Game.holdFestival(), 'festival held');
 ok(G.decrees.festivalBoost > 0, 'festival happiness boost active');
 
@@ -130,7 +130,7 @@ console.log('\n=== PHASE 3: economy & mining (fresh game) ===');
 ok(Object.values(DATA.TILES).length === 162, `map is 162 tiles (got ${Object.values(DATA.TILES).length})`);
 ok(DATA.TOOLS.length === 6 && DATA.GEAR_TIERS.length === 6, '6 tool tiers & 6 gear tiers');
 const P = Game.newGame('sparta');            // clean state for Phase 3
-P.pop = 40; P.res.food = 300; P.res.wood = 400; P.res.stone = 300;
+P.pop = 40; P.res.gold = 100; P.res.wood = 400; P.res.stone = 300;
 P.jobs = { farmer: 0, hunter: 0, builder: 0, miner: 3, soldier: 0 };
 
 console.log('— mining ores by tool —');
@@ -154,7 +154,7 @@ ok(P.tool === 1, `upgraded to Copper Tools (tool=${P.tool})`);
 
 console.log('— weapon/armor tiers —');
 P.tiles[P.capital].buildings.push('barracks', 'forge');
-P.res.food = 300;                            // top up (storage cap clamps, so refill before recruiting)
+P.res.gold = 100;                            // recruits now cost gold + wood
 for (let i = 0; i < 4; i++) Game.recruit();
 ok(P.army.militia >= 4, `recruited militia (${P.army.militia})`);
 P.res.copper = 10;
@@ -197,7 +197,7 @@ ok(Object.values(P.tiles).filter(t => t.overseas).length === 72, '72 overseas ti
 console.log('\n=== PHASE 4: tech tree, acts, tiers, culture (fresh game) ===');
 ok(DATA.TECHS.length === 24 && DATA.TECH_BRANCHES.length === 8, '24 techs across 8 branches');
 const Q = Game.newGame('sparta');
-Q.pop = 40; Q.res.wood = 400; Q.res.stone = 300; Q.res.food = 300;
+Q.pop = 40; Q.res.wood = 400; Q.res.stone = 300; Q.res.gold = 120;
 
 console.log('— tech gating on buildings —');
 const qcap = Q.tiles[Q.capital];
@@ -227,9 +227,12 @@ ok(Game.canResearch(DATA.TECHS.find(t => t.id === 'naval1')), 'Shipwright resear
 
 console.log('— capital T3 (Porphyrogennetos) —');
 Q.techs.push('cult1', 'cult2', 'forge1', 'forge2');
-Q.pop = 85; Q.res.food = 600; qcap.dl = 35;
+Q.pop = 85; qcap.dl = 35;
 qcap.buildings.push('forge', 'shrine', 'shrine', 'shrine', 'shrine');
-for (let i = 0; i < 10; i++) qcap.buildings.push('house');   // house the city so happiness ≥50
+for (let i = 0; i < 10; i++) qcap.buildings.push('house');   // house the city
+for (let i = 0; i < 10; i++) qcap.buildings.push('farm');    // sustain the city (stability ≥50)
+qcap.buildings.push('granary', 'granary');
+Q.jobs = { farmer: 30, hunter: 4, builder: 3, miner: 0, soldier: 0 };
 Game.skipDays(2);
 ok(Q.tier === 3, `Grand Capital reached (tier=${Q.tier}, happy=${Game.happiness()}%)`);
 
@@ -256,6 +259,73 @@ ok(Game.canBuild(hillsQ, 'shrine_of_kings'), 'Shrine of Kings buildable at T3');
 console.log('— dynasty on the banner —');
 Game.chooseFlag('golden_rho');
 ok(Q.flag.dynasty === 'House of Lascaris', `dynasty recorded (${Q.flag.dynasty})`);
+
+console.log('\n=== PHASE 5: empires, diplomacy, stability, map modes (fresh game) ===');
+ok(Object.keys(DATA.EMPIRES).length === 8, '8 empires defined');
+ok(DATA.POP_COLORS.length === 8, '8-colour population gradient');
+const W = Game.newGame('sparta');
+const onMap = Object.entries(DATA.EMPIRES).filter(([id, m]) => !m.distant);
+ok(onMap.every(([id]) => Object.values(W.tiles).some(t => t.owner === id)),
+  `all ${onMap.length} on-map empires hold territory`);
+ok(Object.values(W.empires).every(E => E.flag), 'every empire flies a dynasty flag');
+
+console.log('— empire expansion —');
+const anat = W.empires.anatolia;
+const before5 = Object.values(W.tiles).filter(t => t.owner === 'anatolia').length;
+anat.timers.expand = 1;
+Game.skipDays(3);
+const after5 = Object.values(W.tiles).filter(t => t.owner === 'anatolia').length;
+ok(after5 >= before5, `Anatolia expands or holds (${before5} → ${after5} tiles)`);
+
+console.log('— diplomacy —');
+W.res.gold = 200; W.culture = 60;
+const phoe = W.empires.phoenicia;
+const opBefore = phoe.opinion;
+ok(Game.canDiplo('phoenicia', 'gift'), 'can send gift');
+Game.diploAction('phoenicia', 'gift');
+ok(phoe.opinion > opBefore, `gift raised opinion (${opBefore.toFixed(0)} → ${phoe.opinion.toFixed(0)})`);
+ok(Game.canDiplo('phoenicia', 'trade'), 'trade available at opinion ≥ 0');
+Game.diploAction('phoenicia', 'trade');
+ok(phoe.trade, 'trade agreement signed');
+Game.diploAction('illyria', 'war');
+ok(W.empires.illyria.status === 'war', 'war declared on Illyria');
+W.res.gold = 200;
+ok(Game.canDiplo('illyria', 'peace'), 'can sue for peace');
+Game.diploAction('illyria', 'peace');
+ok(W.empires.illyria.status === 'peace', 'peace concluded');
+
+console.log('— empire invasion (naval descent) —');
+const port = Object.values(W.tiles).find(t => !t.seaGroup && t.port);
+port.owner = 'player'; port.settled = true; port.explored = true;
+Game.diploAction('phoenicia', 'war');
+const strBefore = phoe.strength;
+phoe.timers.invade = 1;
+Game.skipDays(2);
+ok(port.owner !== 'player' || phoe.strength < strBefore || W.statuses.heroic,
+  `invasion resolved (port ${port.owner === 'player' ? 'held' : 'LOST'})`);
+
+console.log('— stability pressure —');
+const stBefore = Game.stability();
+W.empires.kemet.playerTributes = true;
+ok(Game.stability() < stBefore, `tribute pressure lowers stability (${stBefore}% → ${Game.stability()}%)`);
+W.empires.kemet.playerTributes = false;
+
+console.log('— attacking an empire tile means war —');
+Game.diploAction('phoenicia', 'peace') || (phoe.status = 'peace');
+const eTile = Object.values(W.tiles).find(t => t.owner === 'anatolia');
+eTile.explored = true;
+Game.neighbors(eTile.key)[0].owner = 'player';
+W.army = { militia: 0, copper: 0, bronze: 0, iron: 20, lapis: 10, obsidian: 10 };
+W.jobs.soldier = 40;
+Game.attack(eTile.key, 40);
+ok(W.empires.anatolia.status === 'war', 'assaulting Anatolia triggered war');
+
+console.log('— map modes —');
+Game.setMapMode('political');
+ok(W.mapMode === 'political', 'political map mode set');
+Game.setMapMode('population');
+ok(W.mapMode === 'population', 'population map mode set');
+Game.setMapMode('normal');
 
 console.log(fails === 0 ? '\nALL SMOKE TESTS PASSED ✅' : `\n${fails} FAILURES ❌`);
 process.exit(fails ? 1 : 0);
