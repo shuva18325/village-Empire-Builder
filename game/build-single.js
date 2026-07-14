@@ -30,7 +30,7 @@ const js = [G('data.js'), override, G('game.js'), G('map.js'), G('ui.js')].join(
 const html = G('index.html');
 const body = html.split(/<body>/)[1].split(/<script/)[0].trim();
 
-const out = `<title>Empire Builder — Hellas (Acts I–III)</title>
+const out = `<title>Empire Builder — Hellas & the Middle Sea (Acts I–V)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 ${css}
